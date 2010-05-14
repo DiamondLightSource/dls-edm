@@ -34,6 +34,7 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
         num_w = (max_w + small_x_border) / (w + small_x_border)
         num_h = (max_h + small_y_border) / (h + small_y_border) 
         num = num_w*num_h
+        assert num, "Zero size objects found in %s" % ob_list
         counter += (len(obs)+num-1)/num
     a_r = float(max_w)/float(max_h)
     # fudge factors for producing nice screens
