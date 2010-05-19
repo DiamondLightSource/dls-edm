@@ -6,7 +6,6 @@ This file contains a python representation of an edm object with associated
 useful functions."""
 
 import os, re, sys, shutil, cPickle, copy
-from sets import Set
 
 class EdmObject:
 
@@ -205,9 +204,9 @@ class EdmObject:
         lines = []
         # key_set is the set of all property keys
         keys = self.keys()
-        key_set = Set(keys)
+        key_set = set(keys)
         # filter_set is the set of keys to filter against
-        filter_set = Set(filter_keys)
+        filter_set = set(filter_keys)
         # if we need to assert that all keys in filter_keys exist, do so here 
         if assert_existence:
             assert filter_set <= key_set, \
@@ -291,8 +290,8 @@ class EdmObject:
             lines.append('4 0 1')
             lines.append('beginScreenProperties')
             lines.append(self.__readKeys(first_keys))
-            lines.append(self.__readKeys(list(Set(self.keys()) - \
-                                              Set(first_keys))))
+            lines.append(self.__readKeys(list(set(self.keys()) - \
+                                              set(first_keys))))
             lines.append('endScreenProperties')
             lines.append('')
             for ob in self.Objects:
@@ -303,8 +302,8 @@ class EdmObject:
             lines.append('beginObjectProperties')
             lines.append(self.__readKeys(first_keys))
             if self.Type == "Group":
-                lines.append(self.__readKeys(list(Set(self.keys()) -\
-                                              Set(first_keys)-Set(last_keys))))
+                lines.append(self.__readKeys(list(set(self.keys()) -\
+                                              set(first_keys)-set(last_keys))))
                 lines.append('')
                 lines.append('beginGroup')
                 lines.append('')
@@ -314,8 +313,8 @@ class EdmObject:
                 lines.append('')
                 lines.append(self.__readKeys(last_keys,assert_existence=False))
             else:
-                lines.append(self.__readKeys(list(Set(self.keys())-\
-                                                  Set(first_keys))))
+                lines.append(self.__readKeys(list(set(self.keys())-\
+                                                  set(first_keys))))
             lines.append('endObjectProperties')
             lines.append('')
         return "\n".join(lines)
