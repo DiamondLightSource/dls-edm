@@ -175,6 +175,8 @@ class GuiBuilder:
         # add it as an object so it can be included in screens        
         ob = self.object(name)
         ob.addScreen(filename, macros)
+######## What about the status PVs?
+        return ob
     
     def __screenObs(self, name, obs, preferEmbed = True, preferTab = True):
         zero = r"LOC\dummy0=i:0"    

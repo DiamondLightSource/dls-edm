@@ -21,7 +21,7 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
     the aspectratio of the resulting screen"""
     screen = EdmObject("Screen")
     if vtype == "motor":
-        table = EdmTable(yborder=0)
+        table = EdmTable(yborder=0, xjustify="c", yjustify="c")
     else:
         table = EdmTable()
     screen.addObject(table)
