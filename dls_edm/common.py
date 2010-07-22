@@ -356,14 +356,23 @@ def colour_changing_rd(x,y,w,h,name,StatusPv,SevrPv,filename,symbols="",edl=True
     sta and sevr pvs"""
     obgroup = EdmObject("Group")
     if edl:
-        obgroup.addObject(rd(x,y,w,h,filename,symbols))
+        obgroup.addObject(rd_visible(x,y,w,h,"",filename,symbols))
     else:    
-        obgroup.addObject(shell(x,y,w,h,filename))        
-    obgroup.addObject(component_symbol(x,y,w,h,StatusPv,SevrPv,"symbols-button-symbol.edl"))
-    obtext = label(x,y,w,h,name,fontAlign="center")
+        obgroup.addObject(shell_visible(x,y,w,h,"",filename))        
+    obtext = label(x+2,y+2,w-4,h-4,name,fontAlign="center")
     obtext["font"] = quoteString("arial-bold-r-14.0")
     obtext["fgColor"] = obtext.Colour["Related display"]    
-    obgroup.addObject(obtext)
+    obtext["bgAlarm"] = True
+    obtext["alarmPv"] = quoteString(SevrPv)
+    obtext["visPv"] = quoteString(StatusPv)
+    obtext["visMin"] = quoteString("1")
+    obtext["visMax"] = quoteString("2")            
+    obtext["useDisplayBg"] = False
+    obtext2 = obtext.copy()  
+    obtext["visInvert"] = True   
+    obtext2["bgColor"] = obtext.Colour["Monitor: NORMAL"]    
+    obgroup.addObject(obtext)   
+    obgroup.addObject(obtext2)
     obgroup.autofitDimensions()
     return obgroup
 

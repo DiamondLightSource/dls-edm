@@ -52,9 +52,9 @@ class GuiBuilder:
         self.paths = []      
         self.devpaths = []
         self.RELEASE = None
-    	if cl == False:
-    		return
-        from dls.dependency_tree import dependency_tree    
+        if cl == False:
+            return
+        from dls_dependency_tree import dependency_tree    
         # first parse the args
         parser = OptionParser("%prog [options] <BLxxI-gui.xml> <RELEASE>\n" \
             "Builds gui files by parsing xml file")
@@ -68,7 +68,6 @@ class GuiBuilder:
         # now parse the tree
         self.RELEASE = os.path.abspath(args[1])
         tree = dependency_tree(None, self.RELEASE)
-#        docnames,docpaths = tree.paths(globs=["/documentation"],include_name=True)        
         if "BLGui" not in [x.name for x in tree.leaves]:
             prefix = os.path.join(tree.e.prodArea(), "BLGui")
             p = os.path.join(prefix, tree.e.sortReleases(os.listdir(prefix))[-1])
@@ -148,12 +147,16 @@ class GuiBuilder:
         macros = None
         if filename is None:
             filename = d + "/" + name + ".edl"
-            print "Creating %s" % filename
+            if self.errors:
+                print "Creating screen for %s" % name
             screenobs = self.__screenObs(name, obs, preferEmbed, preferTab)
             if screenobs:
                 if len(screenobs) == 1 and screenobs[0].Type == "Group" and screenobs[0].Objects[0].Type == "Related Display":
-                    filename = screenobs[0].Objects[0]["displayFileName"][0].strip('"')                    
-                    macros = screenobs[0].Objects[0]["symbols"][0].strip('"')
+                    filename = screenobs[0].Objects[0]["displayFileName"][0].strip('"')       
+                    if "symbols" in screenobs[0].Objects[0].keys():             
+                        macros = screenobs[0].Objects[0]["symbols"][0].strip('"')
+                    else:
+                        macros = ""
                     screen = None
                 else:
                     screen = Generic(screenobs, auto_x_y_string=P, ideal_a_r=ar)
@@ -170,13 +173,11 @@ class GuiBuilder:
             macros = ",".join("%s=%s" % x for x in macrodict.items())
         component = dict(NAME = name, DESCRIPTION = desc, P = P, \
             EDM_MACROS = macros, FILE = filename, obs = obs)   
-#        component.update(macros) 
         self.components.append(component)   
         # add it as an object so it can be included in screens        
         ob = self.object(name)
         ob.addScreen(filename, macros)
-######## What about the status PVs?
-        return ob
+        return component
     
     def __screenObs(self, name, obs, preferEmbed = True, preferTab = True):
         zero = r"LOC\dummy0=i:0"    
@@ -318,7 +319,8 @@ class GuiBuilder:
         embedded then use embedded instead'''
         # this is the filename of the generated screen
         filename = self.__safe_filename(self.dom + "-" + typ.lower() + ".edl")
-        print "Creating %s" % filename
+        if self.errors:        
+            print "Creating %s" % filename
         # this is the filename for each object put on screens
         if destFilename is None:
             destFilename = srcFilename
