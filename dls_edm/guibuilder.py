@@ -165,7 +165,7 @@ class GuiBuilder:
                 screen.addObject(label(0,0,100,20,"Empty Screen"))  
             if screen is not None:
                 screen = Titlebar(screen, button_text = name,
-                    header_text = desc, title = "Device - %s" % P)
+                    header_text = desc, title = "Device - %s" % name)
                 if substituteEmbed:
                     Substitute_embed(screen,[],{},ungroup=True)
                 open(filename, "w").write(screen.read())
