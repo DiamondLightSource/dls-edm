@@ -171,12 +171,12 @@ class GuiBuilder:
                 open(filename, "w").write(screen.read())
         if macros is None:
             macros = ",".join("%s=%s" % x for x in macrodict.items())
-        component = dict(NAME = name, DESCRIPTION = desc, P = P, \
-            EDM_MACROS = macros, FILE = filename, obs = obs)   
-        self.components.append(component)   
         # add it as an object so it can be included in screens        
         ob = self.object(name)
-        ob.addScreen(filename, macros)
+        ob.addScreen(filename, macros)            
+        component = dict(NAME = name, DESCRIPTION = desc, P = P, \
+            EDM_MACROS = macros, FILE = filename, obs = obs, ob = ob)   
+        self.components.append(component)   
         return component
     
     def __screenObs(self, name, obs, preferEmbed = True, preferTab = True):
@@ -544,6 +544,12 @@ class GuiBuilder:
         paths = "\nexport EDMDATAFILES=${EDMDATAFILES}:".join(self.paths)
         # open the file
         f = open(filename, "w")
+        # work out epics version
+        epics_ver = re.findall(r"R\d(\.\d+)+", os.path.abspath(filename))
+        if epics_ver:
+        	epics_ver = epics_ver[0]
+        else:
+        	epics_ver = "R3.14.11"
         # first put the header in
         f.write(Header % locals())
         # now prepend EDMDATAFILES onto the PATH
@@ -575,6 +581,10 @@ class GuiBuilder:
             self.__writeBLScript("burt", Burt % locals())
                                                                                                 
 Header = """#!/bin/sh
+# Make sure edm is on our path
+export DLS_EPICS_RELEASE=%(epics_ver)s
+source /dls_sw/etc/profile
+
 # first load the paths. These have been generated from the configure/RELEASE
 # tree. If we have a -d arg then load the opi/edl paths first
 if [ "$1" = "-d" ]; then
