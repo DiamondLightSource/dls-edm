@@ -446,7 +446,7 @@ class GuiBuilder:
                                 "not been autofilled." % device_name)
                         continue
                     for key, val in components[0].items():
-                        if key != "obs":
+                        if key not in ["obs","ob"]:
                             group.substitute("#<"+key+">#",val)
                     group["visPv"] = group["visPv"].replace( \
                         "#<"+device_name+">#", "")
@@ -491,7 +491,7 @@ class GuiBuilder:
                 for pv in stats if pv.split(".")[0] not in sevrs ]
             inps += [(pv+" CP MS",True) \
                 for pv in stats if pv.split(".")[0] in sevrs ]
-            inps += [(pv+" CP MS",False) \
+            inps += [(pv+".SEVR CP MS",False) \
                 for pv in sevrs if pv not in stripped_stats ]
             inps = sorted(set(inps))
             # now work out how many calcs we need
@@ -517,7 +517,10 @@ class GuiBuilder:
                 if ncalcs>1:
                     self.__writeCalc(recordName+str(i+1),CALC=CALC,FLNK=recordName,**cargs)                              
                 else:
-                    self.__writeCalc(recordName,CALC=CALC,**cargs)                              
+                    self.__writeCalc(recordName,CALC=CALC,**cargs)            
+            x["ob"].addRecord(recordName)
+            if sevrs:                          
+                x["ob"].addRecord(recordName, True)                                
         self.dbf.close()
 
     def startupScript(self, filename = None, edl = None, macros = None, 
@@ -545,11 +548,11 @@ class GuiBuilder:
         # open the file
         f = open(filename, "w")
         # work out epics version
-        epics_ver = re.findall(r"R\d(\.\d+)+", os.path.abspath(filename))
-        if epics_ver:
-        	epics_ver = epics_ver[0]
+        epics_ver = re.findall(r"(R\d(?:\.\d+)+)", os.path.abspath(filename))
+        if epics_ver:            
+            epics_ver = epics_ver[0]
         else:
-        	epics_ver = "R3.14.11"
+            epics_ver = "R3.14.11"
         # first put the header in
         f.write(Header % locals())
         # now prepend EDMDATAFILES onto the PATH
