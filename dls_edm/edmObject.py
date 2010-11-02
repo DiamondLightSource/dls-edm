@@ -557,18 +557,16 @@ def write_helper():
     # build act_save.so, the program for creating a file of all edm objects
     line = "g++ -fPIC "+" ".join(dirs)+\
               " -shared act_save.cc -o act_save.so -Wl,-rpath="+lib_path+\
-              " -L"+lib_path+" -lEdmUtil"
+              " -L"+lib_path+" -lEdmBase"
     print line              
     os.system(line)              
     # run it
     os.system("env LD_PRELOAD=./act_save.so edm -crawl dummy.edl")
-    os.remove("act_save.so")
     file = open("allwidgets.edl","r")
     # get rid of the junk output by one widget
     screen_text = file.read().replace( \
       "# Additional properties\nbeginObjectProperties\nendObjectProperties","")
     file.close()
-    os.remove("allwidgets.edl")
     os.chdir(cwd)
     # the output of the program isn't a proper screen, so make it so
     all_obs = EdmObject("Screen")
@@ -597,7 +595,7 @@ def write_helper():
     screen_properties["botShadowColor"] = COLOUR["Bottom Shadow"]
     screen_properties["showGrid"] = True
     screen_properties["snapToGrid"] = True
-    screen_properties["disableScroll"] = True
+    screen_properties["disableScroll"] = False
     PROPERTIES = { "Screen": screen_properties}
     for ob in all_obs.Objects:
         # write the default properties for each object

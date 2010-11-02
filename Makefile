@@ -1,8 +1,8 @@
 # Specify defaults for testing
-PREFIX=/scratch/tools
+PREFIX=/dls_sw/prod/tools/RHEL5
 PYTHON=$(PREFIX)/bin/python2.6
-INSTALL_DIR=$(PREFIX)/lib/python2.6/site-packages
-SCRIPT_DIR=$(PREFIX)/bin
+INSTALL_DIR=/dls_sw/work/common/python/test/packages
+SCRIPT_DIR=/dls_sw/work/common/python/test/scripts
 MODULEVER=0.0
 
 # Override with any release info
@@ -22,7 +22,7 @@ dls_edm/helper.pkl: dls_edm/edmObject.py
 # Clean the module
 clean:
 	$(PYTHON) setup.py clean
-	-rm -rf build dist *egg-info installed.files
+	-rm -rf build dist *egg-info installed.files dls_edm/helper.pkl
 	-find -name '*.pyc' -exec rm {} \;
 	$(MAKE) -C documentation clean	
 
