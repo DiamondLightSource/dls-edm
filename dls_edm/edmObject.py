@@ -211,8 +211,14 @@ class EdmObject:
         if assert_existence:
             assert filter_set <= key_set, \
             'Some required keys not defined: '+str(list(filter_set - key_set))
-        # print the keys
-        for key in filter_keys:
+        # Make sure related displays with no filenames have the right numDsps
+        if self.Type=="Related Display":
+            if "displayFileName" in self.keys() and len(self["displayFileName"].keys()) == 1 and self["displayFileName"][self["displayFileName"].keys()[0]] == '""':
+                self["displayFileName"] = {}
+                self["symbols"] = {}
+                self["numDsps"] = 0
+        # print the keys                
+        for key in sorted(filter_keys):
             if key in keys and not key=="object" and not key[:2]=="__":
                 value = self[key]
                 if value is True:
@@ -222,14 +228,16 @@ class EdmObject:
                     if value.__class__ == [].__class__:
                         # output a multiline string
                         text_vals = ['  %s\n' % str(v) for v in value]
-                        lines.append(key + ' {\n' + ''.join(text_vals) + '}')
+                        if text_vals:
+                            lines.append(key + ' {\n' + ''.join(text_vals) + '}')
                     elif value.__class__ == {}.__class__:
                         # output a multiline dict
                         vals = value.keys()
                         vals.sort()
                         text_vals = ['  %s %s\n' % (str(k), str(value[k])) \
                                      for k in vals]
-                        lines.append(key + ' {\n' + ''.join(text_vals) + '}')
+                        if text_vals:
+                            lines.append(key + ' {\n' + ''.join(text_vals) + '}')
                     else:
                         # output a string value
                         lines.append(str(key)+" "+str(value))

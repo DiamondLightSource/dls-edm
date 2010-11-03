@@ -18,6 +18,9 @@ class GBObject(object):
             self.macrodict = macrodict
         else:
             self.macrodict = {}            
+        self.macrodict["NAME"] = self.name
+        self.macrodict["FILE"] = ""
+        self.macrodict["EDM_MACROS"] = ""
         if children:
             self.children = children
         else:
@@ -29,8 +32,8 @@ class GBObject(object):
         if embedded == False and tab == False:
             self.macrodict["NAME"] = self.name
             self.macrodict["FILE"] = os.path.basename(filename)
-            self.macrodict["EDM_MACROS"] = macros     
-            for k,v in [x.split("=") for x in macros.split(",")]:
+            self.macrodict["EDM_MACROS"] = macros    
+            for k,v in [x.split("=") for x in macros.split(",") if x]:
                 self.macrodict[k.strip()] = v.strip()
                                     
     def addShell(self, command):
@@ -56,7 +59,7 @@ WARN = 1
 ERROR = 2
 
 class GuiBuilder:
-    def __init__(self, dom, errors = ERROR, cl=True):
+    def __init__(self, dom = "", errors = ERROR):
         # setup our list of objects
         self.objects = []    
         self.dom = dom
@@ -67,9 +70,8 @@ class GuiBuilder:
         self.RELEASE = None
         # initialise record text
         self.dbtext = ""        
-        if cl == False:
-            return
-        from dls_dependency_tree import dependency_tree    
+        
+    def parseArgs(self):        
         # first parse the args
         parser = OptionParser("%prog [options] <BLxxI-gui.xml> <RELEASE>\n" \
             "Builds gui files by parsing xml file")
@@ -80,17 +82,25 @@ class GuiBuilder:
             parser.error("Invalid number of arguments, run with -h to see usage")            
         # store options
         self.db = options.db
+        self.parseRelease(os.path.abspath(args[1]))
+        self.parseXml(args[0])
+        
+    def parseRelease(self, RELEASE):
         # now parse the tree
-        self.RELEASE = os.path.abspath(args[1])
+        from dls_dependency_tree import dependency_tree        
+        self.RELEASE = RELEASE
         tree = dependency_tree(None, self.RELEASE)
         if "BLGui" not in [x.name for x in tree.leaves]:
             prefix = os.path.join(tree.e.prodArea(), "BLGui")
             p = os.path.join(prefix, tree.e.sortReleases(os.listdir(prefix))[-1])
             tree.leaves.append(dependency_tree(tree, module_path = p))
         self.paths = tree.paths()            
-        self.devpaths = tree.paths(["/*App/op*/edl","/*App/op*/symbol"])           
+        self.devpaths = tree.paths(["/*App/op*/edl","/*App/op*/symbol"])    
+        
+    def parseXml(self, xml):
+        self.xml = xml               
         # open the xml file
-        xml_root = minidom.parse(args[0])        
+        xml_root = minidom.parse(self.xml)        
         # find the root node
         c_node = self._elements(xml_root)[0]
         # populate them from our elements        
@@ -163,33 +173,32 @@ class GuiBuilder:
             self.__writeRecord(ob, obs)
             
         # if we are not given a filename, we should make a screen for it
-        macros = None
+        macros = ",".join("%s=%s" % x for x in macrodict.items())
         if filename is None and obs:
             filename = d + "/" + name + ".edl"
             if self.errors:
                 print "Creating screen for %s" % name
             screenobs = self.__screenObs(name, obs, preferEmbed, preferTab)
             if screenobs:
+                # only one display which is not embedded, so just add launch this screen
                 if len(screenobs) == 1 and screenobs[0].Type == "Group" and screenobs[0].Objects[0].Type == "Related Display":
                     filename = screenobs[0].Objects[0]["displayFileName"][0].strip('"')       
                     if "symbols" in screenobs[0].Objects[0].keys():             
                         macros = screenobs[0].Objects[0]["symbols"][0].strip('"')
                     else:
                         macros = ""
-                    screen = None
                 else:
                     screen = Generic(screenobs, auto_x_y_string=P, ideal_a_r=ar)
+                    macros = ""
+                    screen = Titlebar(screen, button_text = name,
+                        header_text = desc, title = "Device - %s" % name)
+                    if substituteEmbed:
+                        Substitute_embed(screen,[],{},ungroup=True)
+                    open(filename, "w").write(screen.read())
             else:
-                screen = EdmObject("Screen")
-                screen.addObject(label(0,0,100,20,"Empty Screen"))  
-            if screen is not None:
-                screen = Titlebar(screen, button_text = name,
-                    header_text = desc, title = "Device - %s" % name)
-                if substituteEmbed:
-                    Substitute_embed(screen,[],{},ungroup=True)
-                open(filename, "w").write(screen.read())
-        if macros is None:
-            macros = ",".join("%s=%s" % x for x in macrodict.items())
+                filename = None    
+                
+        # if there is a filename of some kind then add a screen to the object                
         if filename:       
             ob.addScreen(filename, macros)
         return ob

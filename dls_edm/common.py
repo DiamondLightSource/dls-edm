@@ -102,9 +102,13 @@ def rd(x,y,w,h,filename,symbols):
     ob["invisible"] = True
     ob["buttonLabel"] = quoteString("device screen")
     ob["numPvs"] = 4
-    ob["numDsps"] = 1
-    ob["displayFileName"] = { 0: quoteString(filename) }
-    ob["symbols"] = { 0: quoteString(symbols) }
+    if filename:
+       ob["displayFileName"] = { 0: quoteString(filename) }
+       ob["numDsps"] = 1       
+       if symbols:
+          ob["symbols"] = { 0: quoteString(symbols) }
+    else:
+       ob["numDsps"] = 0      
     return ob
 
 def shell(x,y,w,h,command):
