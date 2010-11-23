@@ -15,7 +15,7 @@ class GBObject(object):
     def __init__(self, name, macrodict = None, children = None):
         self.name = name
         if macrodict:
-            self.macrodict = macrodict
+            self.macrodict = macrodict.copy()
         else:
             self.macrodict = {}            
         self.macrodict["NAME"] = self.name
@@ -30,11 +30,11 @@ class GBObject(object):
     def addScreen(self, filename, macros = "", embedded = False, tab = False):
         self.screens.append(GBScreen(filename, macros, embedded, tab))  
         if embedded == False and tab == False:
+            for k,v in [x.split("=") for x in macros.split(",") if x]:
+                self.macrodict[k.strip()] = v.strip()        
             self.macrodict["NAME"] = self.name
             self.macrodict["FILE"] = os.path.basename(filename)
             self.macrodict["EDM_MACROS"] = macros    
-            for k,v in [x.split("=") for x in macros.split(",") if x]:
-                self.macrodict[k.strip()] = v.strip()
                                     
     def addShell(self, command):
         self.shells.append(GBShell(command))                                           
@@ -163,13 +163,14 @@ class GuiBuilder:
         if macrodict is None:
             macrodict = {}  
         macrodict["NAME"] = name
-        macrodict["DESCRIPTION"] = desc        
+        macrodict["DESCRIPTION"] = desc   
+        if P:
+            macrodict["P"] = P             
         ob = GBObject(name, macrodict, obs)
         self.objects.append(ob)
 
         # if we are given a P, this means we should write records for it
         if P:
-            macrodict["P"] = P
             self.__writeRecord(ob, obs)
             
         # if we are not given a filename, we should make a screen for it
