@@ -554,9 +554,10 @@ class GuiBuilder:
             self.dom+"App/opi/edl")            
         BLpath = self.RELEASE.replace("configure/RELEASE","data")
         # format paths for release tree
-        devpaths = "\n    export EDMDATAFILES=${EDMDATAFILES}:".join( \
-            self.devpaths)
-        paths = "\nexport EDMDATAFILES=${EDMDATAFILES}:".join(self.paths)
+        devpaths = "".join(['    export EDMDATAFILES="${EDMDATAFILES}%s:"\n'%x \
+            for x in self.devpaths])
+        paths = "".join(['export EDMDATAFILES="${EDMDATAFILES}:%s"\n'%x \
+            for x in self.paths])
         # open the file
         f = open(filename, "w")
         # work out epics version
@@ -594,24 +595,29 @@ class GuiBuilder:
             self.__writeBLScript("alhserver", Alhserver % locals())
         if burt:
             self.__writeBLScript("burt", Burt % locals())
-                                                                                                
+                                                                                                       
 Header = """#!/bin/sh
 # Make sure edm is on our path
 export DLS_EPICS_RELEASE=%(epics_ver)s
 source /dls_sw/etc/profile
+TOP="$(cd $(dirname "$0")/../..; pwd)"
 
 # first load the paths. These have been generated from the configure/RELEASE
 # tree. If we have a -d arg then load the opi/edl paths first
+unset EDMDATAFILES
 if [ "$1" = "-d" ]; then
-    export EDMDATAFILES=%(BLdevpath)s:.
-    export EDMDATAFILES=${EDMDATAFILES}:%(devpaths)s    
+    if ls ${TOP}/*App/opi/edl > /dev/null 2>&1; then
+        for d in ${TOP}/*App/opi/edl; do
+            export EDMDATAFILES="${EDMDATAFILES}${d}:"
+        done
+    fi
+    %(devpaths)s
     OPTS="-x -eolc"
 else
-    export EDMDATAFILES=.
     OPTS="-x -eolc -noedit"
 fi
-export EDMDATAFILES=${EDMDATAFILES}:%(BLpath)s
-export EDMDATAFILES=${EDMDATAFILES}:%(paths)s
+export EDMDATAFILES="${EDMDATAFILES}${TOP}/data"
+%(paths)s
 """
 
 SetPath = """
