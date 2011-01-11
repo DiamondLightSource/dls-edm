@@ -575,7 +575,9 @@ class GuiBuilder:
         if setPort:
             f.write(SetPort)
         # finally run edm
-        f.write('edm ${OPTS} -m "%(macros)s" %(edl)s' % locals())
+        if macros:
+            macros = '-m "%s" ' % macros
+        f.write('edm ${OPTS} %(macros)s %(edl)s' % locals())
         # write the file out
         f.close()
 
