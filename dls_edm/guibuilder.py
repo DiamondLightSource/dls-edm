@@ -662,6 +662,6 @@ fi
     $(dirname $0)/%(dom)s.alhConfig &
 """
 
-Fe = "/home/diamond/R3.13.9/prod/support/Launcher/Rx-y/FrontEnd_QT.sh %(FEdom)s"
+Fe = "/dls_sw/prod/etc/Launcher/FrontEnd_QT.sh %(FEdom)s"
 
 Burt = "if [ -d $1 ]; then cd $1; fi; burtgooey"
