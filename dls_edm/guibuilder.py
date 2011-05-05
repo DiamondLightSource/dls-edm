@@ -30,6 +30,7 @@ class GBObject(object):
     def addScreen(self, filename, macros = "", embedded = False, tab = False):
         self.screens.append(GBScreen(filename, macros, embedded, tab))  
         if embedded == False and tab == False:
+            macros = macros.replace(",undefined)", ")")
             for k,v in [x.split("=") for x in macros.split(",") if x]:
                 self.macrodict[k.strip()] = v.strip()        
             self.macrodict["NAME"] = self.name
