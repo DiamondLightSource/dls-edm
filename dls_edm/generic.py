@@ -36,14 +36,10 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
         num = num_w*num_h
         assert num, "Zero size objects found in %s" % ob_list
         counter += (len(obs)+num-1)/num
-    a_r = float(max_w)/float(max_h)
     # fudge factors for producing nice screens
     if ideal_a_r is None:
-        if a_r < 2 and counter > 3:
-            ideal_a_r = 2
-        else:
-            ideal_a_r = 3.5
-    max_y = math.sqrt(counter*a_r/ideal_a_r)
+    	ideal_a_r = 2
+    max_y = int(counter/float(ideal_a_r)+0.8-counter*counter/80.0)
     new_layout = None
     num_remaining = 0
     num_h = 0
