@@ -17,10 +17,10 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
     row_dict should represent the line on a spreadsheet, ie have NAME,
     DESCRIPTION, NTEMP, NFLOW, NMOTOR, EDM_MACROS, FILE defined.
     e.g dict["NAME"] = S1, dict["NFLOW"]=1. domain should be the domain that
-    will appear in the titlebar. vtype is "temp", "flow" or "motor". aspectratio is
-    the aspectratio of the resulting screen"""
+    will appear in the titlebar. vtype is "temp", "flow", "motor" or "eloss". 
+    aspectratio is the aspectratio of the resulting screen"""
     screen = EdmObject("Screen")
-    if vtype == "motor":
+    if vtype == "motor" or vtype == "eloss":
         table = EdmTable(yborder=0, xjustify="c", yjustify="c")
     else:
         table = EdmTable()
@@ -29,10 +29,15 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
         headerText = "Temperature Summary"
     elif vtype =="flow":
         headerText = "Water Flow Summary"
-    else:
+    elif vtype == "motor":
         headerText = "Motion Summary"
+    else:
+        headerText = "Eloss Summary"
     done_devices = []
-    nvtype = "N"+vtype.upper()
+    if vtype == "eloss":
+        nvtype = "NMOTOR"
+    else:
+        nvtype = "N"+vtype.upper()
     totalv = 0
     maxv = 0
     nvtypev = 0
@@ -78,7 +83,7 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
                             'gnome-terminal --disable-factory --hide-menubar -t "Home %s" -e "$(dom)-motorhome.py %s"'
                             %(dict["NAME"],dict["NAME"]) )
                     table.addObject(ob,xoff=xs)
-                    xoff = -xs                    
+                    xoff = -xs                 
                 else:
                     xoff = 0
                     xs = 90
@@ -98,6 +103,13 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
                         ob = embed(0,0,90,20,"BLGui-flow-embed","flow="+\
                                    dict["W"]+dict["W"+str(i)]+",label=Flow "+\
                                    str(i)+",P="+dict["P"])
+                    elif vtype=="eloss":
+                        # Strip off the colon from the motor name
+                        elossLabel = dict["M"+str(i)]
+                        elossLabel = elossLabel[1:]
+                        ob = embed(0, 0, 149, 22, "BLGui-elossSummary-embed", "motor="+\
+                                   dict["P"]+dict["M"+str(i)]+",label="+\
+                                   elossLabel)
                     else:
                         # Strip off the colon from the motor name
                         motorLabel = dict["M"+str(i)]
@@ -112,6 +124,9 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
     # create screen
     if vtype=="motor":
         ob = embed(0,0,223,22,"BLGui-motor-key","a=b")
+        table.addObject(ob)
+    elif vtype=="eloss":
+        ob =  embed(0,0,156,22,"BLGui-eloss-key","a=b")
         table.addObject(ob)
     else:
         interlock = rd_visible(0,0,90,20,"Interlocks",domain+"-interlocks")
