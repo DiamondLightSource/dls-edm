@@ -137,14 +137,16 @@ class GuiBuilder:
     def _elements(self, xml):
         return [n for n in xml.childNodes if n.nodeType == n.ELEMENT_NODE]        
 
-    def get(self, name, glob = True):
+    def get(self, name, glob = True, without = None):
         '''Gets all GBObjects with names matching name. If glob then do simple 
         wildcard * expansion, otherwise do regex expansion'''   
         orig_name = name 
         if glob:
             name = name.replace(".", r"\.").replace("*", r"[^\.]*")
         # filter the list of available objects
-        ret = [o for o in self.objects if re.match(name, o.name) and re.match(name, o.name).end() == len(o.name)]
+        if without == None:
+            without = []
+        ret = [o for o in self.objects if re.match(name, o.name) and re.match(name, o.name).end() == len(o.name) and o.name not in without]
         return ret
 
     def error(self, text):
@@ -339,7 +341,7 @@ class GuiBuilder:
         return objects, embedded
                             
     def summary(self, typ, srcFilename, destFilename = None, 
-            embedded = None, group = True, ar = 1.5):
+            embedded = None, group = True, groupByName = False, ar = 1.5):
         '''Take a GBScreen object srcOb, find all like it, and display them all
         in a summary screen. If obFilename then use obFilename instead. If 
         embedded then use embedded instead'''
@@ -358,8 +360,22 @@ class GuiBuilder:
         # objects is a list of list of screen objects to add
         screen_objects = []
         if group:
+            if groupByName:
+                # make a tree heirarachy according to . in names
+                groupObjects = []
+                for o in self.objects:
+                    if len(o.name.split(".", 1)) == 1:
+                        groupObjects.append(copy(o))
+                        groupObjects[-1].children = []
+                for o in self.objects:
+                    if len(o.name.split(".", 1)) == 2:
+                        parent = [x for x in groupObjects if x.name == o.name.split(".", 1)[0]]
+                        if parent:
+                            parent[0].children.append(o)
+            else:
+                groupObjects = self.objects        
             # group by parent object
-            for o in self.objects:
+            for o in groupObjects:
                 # if no child objects then don't need to do anything
                 if not o.children:
                     continue
@@ -403,11 +419,19 @@ class GuiBuilder:
     def motorHomedSummary(self):
         '''Create a motor homed summary <dom>-motor-homed.edl'''
         self.summary("Motor Homed", "motor.edl", "motor-embed-homed.edl", \
-                embedded = True)
+                embedded = True, groupByName = True)
 
     def interlockSummary(self):
         '''Create an interlock summary <dom>-interlocks.edl'''
         self.summary("Interlocks", "interlock-embed.edl", group = False, embedded = True)        
+
+    def temperatureSummary(self):
+        '''Create an interlock summary <dom>-interlocks.edl'''
+        self.summary("Temperatures", "temperature-embed.edl", embedded = True)        
+
+    def flowSummary(self):
+        '''Create an interlock summary <dom>-interlocks.edl'''
+        self.summary("Water Flows", "flow-embed.edl", embedded = True)        
 
     def autofilled(self, screen):
         '''Return a filled version of screen. Any top level group will have tags
@@ -511,7 +535,7 @@ class GuiBuilder:
         if ncalcs>1:
             letters = [chr(65+j) for j in range(ncalcs)]      
             CALC = "(%s)>0?1:0"%("|".join(letters))  
-            cargs = dict(("INP%s"%l,"%s%s"%(recordName,j+1)) \
+            cargs = dict(("INP%s"%l,"%s%s CP MS"%(recordName,j+1)) \
                 for j,l in enumerate(letters))            
             self.__writeCalc(recordName,CALC=CALC,**cargs)  
         # create the calc records          
@@ -614,7 +638,8 @@ if [ "$1" = "-d" ]; then
             export EDMDATAFILES="${EDMDATAFILES}${d}:"
         done
     fi
-    %(devpaths)s
+    export EDMDATAFILES="${EDMDATAFILES}${TOP}/data:"
+%(devpaths)s
     OPTS="-x -eolc"
 else
     OPTS="-x -eolc -noedit"

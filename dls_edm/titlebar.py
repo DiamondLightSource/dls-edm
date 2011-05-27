@@ -47,7 +47,7 @@ def PV_titlebar(width,string,tooltip,ta="CO"):
     group = titlebar_group(width,tooltip)
     PV = EdmObject("Textupdate")
     PV.setPosition(1,3)
-    PV.setDimensions(width-1,25)
+    PV.setDimensions(width+40,25)
     PV["font"]=quoteString("arial-bold-r-16.0")
     PV["fontAlign"]=quoteString("center")
     PV["fgColor"]=PV.Colour["Black"]
@@ -62,7 +62,7 @@ def text_titlebar(width,string,tooltip,ta="CO"):
     group = titlebar_group(width,tooltip)
     text = EdmObject("Static Text")
     text.setPosition(1,3)
-    text.setDimensions(width-1,25)
+    text.setDimensions(width+40,25)
     text["font"]=quoteString("arial-bold-r-16.0")
     text["fontAlign"]=quoteString("center")
     text["bgColor"]=text.Colour[ta+" title"]

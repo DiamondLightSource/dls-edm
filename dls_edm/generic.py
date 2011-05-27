@@ -54,25 +54,44 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
         num_h = (max_h + small_y_border) / (h + small_y_border) 
         num = num_w*num_h
         if num > 1:
+            # if there's only a few, see if they fit in the last table
+            if new_layout and num_remaining > 0:
+                will_fit = max(num, num_remaining)
+                for ob in obs[:will_fit]:
+                    new_layout.addObject(ob)
+                    new_layout.nextCell(max_y = num_h -1 )                     
+                obs = obs[will_fit:]
+                num_remaining -= will_fit
+            # put any extra into new table
             num_groups = (len(obs)+num-1)/num
             groups = [obs[i:i+num] for i in [i*num for i in range(num_groups)]]
-            # if there's only a few, see if they fit in the last table
-            if len(groups) == 1 and new_layout and num_remaining > len(groups[0]):
-                for ob in groups[0]:
+            for group in groups:
+                new_layout = EdmTable(xborder=small_x_border,\
+                                        yborder=small_y_border)
+                base_layout.addObject(new_layout)
+                for ob in group:
                     new_layout.addObject(ob)
-                    new_layout.nextCell(max_y = num_h -1 )                    
-                num_remaining -= len(groups[0])
-            else:
-                for group in groups:
-                    new_layout = EdmTable(xborder=small_x_border,\
-                                          yborder=small_y_border)
-                    base_layout.addObject(new_layout)
-                    for ob in group:
-                        new_layout.addObject(ob)
-                        new_layout.nextCell(max_y = num_h -1 )
-                    base_layout.nextCell(max_y = max_y -1)
-                    new_layout.setDimensions(max_w,max_h)        
-                num_remaining = num - len(obs)
+                    new_layout.nextCell(max_y = num_h -1 )
+                base_layout.nextCell(max_y = max_y -1)
+                new_layout.setDimensions(max_w,max_h)        
+                num_remaining = num - len(group)            
+            
+#            if len(groups) == 1 and new_layout and num_remaining > len(groups[0]):
+#                for ob in groups[0]:
+#                    new_layout.addObject(ob)
+#                    new_layout.nextCell(max_y = num_h -1 )                    
+#                num_remaining -= len(groups[0])
+#            else:
+#                for group in groups:
+#                    new_layout = EdmTable(xborder=small_x_border,\
+#                                          yborder=small_y_border)
+#                    base_layout.addObject(new_layout)
+#                    for ob in group:
+#                        new_layout.addObject(ob)
+#                        new_layout.nextCell(max_y = num_h -1 )
+#                    base_layout.nextCell(max_y = max_y -1)
+#                    new_layout.setDimensions(max_w,max_h)        
+#                num_remaining = num - len(obs)
         else:
             for ob in obs:
                 base_layout.addObject(ob)

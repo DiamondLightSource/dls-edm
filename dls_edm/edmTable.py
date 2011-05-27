@@ -48,12 +48,12 @@ class EdmTable(EdmObject):
         minw = sum(ws)+(len(ws)-1)*self["__def_xborder"]
         minh = sum(hs)+(len(hs)-1)*self["__def_yborder"]
         # if widths and heights are bigger than their minimums, resize cells uniformly
-        if self["w"] > minw:
+        if self["w"] > minw and self["__def_xjustify"] != "l":
             wratio = float(self["w"] - minw)/sum(ws)+1
             ws = [ int(0.5+w*wratio) for w in ws ]
         else:
             self["w"] = minw
-        if self["h"] > minh:
+        if self["h"] > minh and self["__def_yjustify"] != "t":
             hratio = float(self["h"] - minh)/sum(hs)+1
             hs = [ int(0.5+h*hratio) for h in hs ]
         else:
