@@ -29,6 +29,13 @@ class GBObject(object):
 
     def addScreen(self, filename, macros = "", embedded = False, tab = False):
         macros = macros.replace(",undefined)", ")").rstrip("\r")    
+        mdict = {}
+        # make sure edm gets '' for empty macros
+        for k,v in [x.split("=") for x in macros.split(",") if x]:
+            if not v.strip(): 
+                v = "''"
+            mdict[k.strip()] = v.strip()     
+        macros = ','.join(["%s=%s" %x for x in mdict.items()])            
         self.screens.append(GBScreen(filename, macros, embedded, tab))  
         if embedded == False and tab == False:
             for k,v in [x.split("=") for x in macros.split(",") if x]:
@@ -256,13 +263,13 @@ class GuiBuilder:
             # now add the rds          
             for rd in rds:
                 out.append(colour_changing_rd(0, 0, 90, 20, name = label, 
-                    edl = True, filename = rd.filename, symbols = rd.macros, 
+                    edl = True, filename = os.path.basename(rd.filename), symbols = rd.macros, 
                     **args))
             # then embedded screens             
             for e in embeds:
                 filename = e.filename
                 self.__load_screen(filename)
-                eob = embed(0,0,0,0,filename,",".join([e.macros, "label="+label]))
+                eob = embed(0,0,0,0,os.path.basename(filename),",".join([e.macros, "label="+label]))
                 eob.setDimensions(\
                     *Substitute_embed.in_screens[filename].getDimensions())                
                 out.append(eob)
@@ -271,7 +278,7 @@ class GuiBuilder:
                 filename = e.filename
                 self.__load_screen(filename)             
                 w, h = Substitute_embed.in_screens[filename].getDimensions()
-                tabobs.append((label, filename, e.macros, w, h))
+                tabobs.append((label, os.path.basename(filename), e.macros, w, h))
         if tabobs:
             grp = EdmObject("Group")
             buttons = EdmObject("Choice Button")
