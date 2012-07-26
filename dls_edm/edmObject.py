@@ -469,11 +469,15 @@ class EdmObject:
         self["x"] = newx
         self["y"] = newy
 
-    def substitute(self,old,new):
+    def substitute(self,old,rep):
         """substitute(old_text,new_text) -> None Replace each instance of
         old_text with new_text in every property value, and every child
         object"""
         for key,value in self.items():
+            if rep == "''" and key not in ["symbols"]:
+                new = ""
+            else:
+                new = rep
             if type(value) == list:
                 self[key] = [ o.replace(old,new) for o in value ]
             elif type(value) == dict:
@@ -489,7 +493,7 @@ class EdmObject:
                 except AttributeError:
                     pass
         for ob in self.Objects:
-            ob.substitute(old,new)
+            ob.substitute(old,rep)
 
     def ungroup(self):
         """ungroup() -> None

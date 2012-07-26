@@ -430,7 +430,7 @@ class GuiBuilder:
 
     def interlockSummary(self):
         '''Create an interlock summary <dom>-interlocks.edl'''
-        self.summary("Interlocks", "interlock-embed.edl", group = False, embedded = True)        
+        self.summary("Interlocks", "interlock-embed-small.edl", group = False, embedded = True)        
 
     def temperatureSummary(self):
         '''Create an interlock summary <dom>-interlocks.edl'''
