@@ -521,7 +521,7 @@ class GuiBuilder:
         records = self.__concat(o.records for o in obs)
         recordName = ob.macrodict["P"] + ":DEVSTA"             
         if len(records) == 0:
-            self.__writeCalc(recordName,CALC="0",PINI="YES")
+            self.__writeCalc(recordName,CALC=0,PINI="YES")
             return
         # first make a set of all severities and stats
         sevrs = [r.pv.split(".")[0] for r in records if r.sevr]
@@ -529,11 +529,11 @@ class GuiBuilder:
         stripped_stats = [pv.split(".")[0] for pv in stats]
         # now create inputs
         # inps = (pv,inCalc)
-        inps  = [(pv+" CP NMS",True) \
+        inps  = [(pv+" NMS",True) \
             for pv in stats if pv.split(".")[0] not in sevrs ]
-        inps += [(pv+" CP MS",True) \
+        inps += [(pv+" MS",True) \
             for pv in stats if pv.split(".")[0] in sevrs ]
-        inps += [(pv+".SEVR CP MS",False) \
+        inps += [(pv+".SEVR MS",False) \
             for pv in sevrs if pv not in stripped_stats ]
         inps = sorted(set(inps))
         # now work out how many calcs we need
@@ -542,9 +542,9 @@ class GuiBuilder:
         if ncalcs>1:
             letters = [chr(65+j) for j in range(ncalcs)]      
             CALC = "(%s)>0?1:0"%("|".join(letters))  
-            cargs = dict(("INP%s"%l,"%s%s CP MS"%(recordName,j+1)) \
+            cargs = dict(("INP%s"%l,"%s%s MS"%(recordName,j+1)) \
                 for j,l in enumerate(letters))            
-            self.__writeCalc(recordName,CALC=CALC,**cargs)  
+            self.__writeCalc(recordName,SCAN="1 second",CALC=CALC,PHAS=3,ACKT="NO",**cargs)  
         # create the calc records          
         for i in range(ncalcs):
             subset = inps[12*i:12*i+12]
@@ -557,9 +557,9 @@ class GuiBuilder:
             cargs = dict(("INP%s"%(chr(65+j)),pv) \
                 for j,(pv,inCalc) in enumerate(subset))
             if ncalcs>1:
-                self.__writeCalc(recordName+str(i+1),CALC=CALC,FLNK=recordName,**cargs)                              
+                self.__writeCalc(recordName+str(i+1),SCAN="1 second",CALC=CALC,PHAS=2,ACKT="NO",**cargs)
             else:
-                self.__writeCalc(recordName,CALC=CALC,**cargs)            
+                self.__writeCalc(recordName,SCAN="1 second",CALC=CALC,PHAS=2,ACKT="NO",**cargs)
         ob.addRecord(recordName)
         if sevrs:                          
             ob.addRecord(recordName, True)                                        
