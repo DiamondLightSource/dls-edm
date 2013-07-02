@@ -6,7 +6,7 @@ usage = """%prog [options] <input_screen> <output_screen> <width> <height>
 This script resizes an edm screen <input_screen> to size (<width>,<height>).
 It also resizes fonts, then prints the resulting screen to <output_screen>"""
 
-import os, sys, numpy
+import os, sys
 from optparse import OptionParser
 from edmObject import *
 
@@ -16,10 +16,8 @@ def new_font_size(factor,font):
              1200,1680,2160,3120,4080,5040]
     size = int(font.split("-")[-1].replace('.0"',""))
     # work out the difference between the desired size and available sizes
-    diffs = abs( numpy.array(sizes)-int(size*factor*10) )
-    # select the one with the least difference
-    new_size = int( sizes[ numpy.argmin(diffs) ]/10 )
-    new_font = font.replace("-"+str(size),"-"+str(new_size))
+    new_size = min(sizes, key=lambda x:abs(x-int(size*factor*10)))
+    new_font = font.replace("-"+str(size),"-"+str(int(new_size/10.0)))
     return new_font
 
 
@@ -48,3 +46,4 @@ def cl_resize():
 
 if __name__ == "__main__":
     cl_resize()
+
