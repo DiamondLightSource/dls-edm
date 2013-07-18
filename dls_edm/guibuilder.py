@@ -689,7 +689,7 @@ Alhserver = r"""#!/bin/sh
 if [ ! -d %(alhLogPath)s ]; then
     mkdir -m 775 -p %(alhLogPath)s
 fi
-/dls_sw/epics/R3.14.8.2/extensions/bin/linux-x86/alh -m 0 -T \
+alh -m 0 -T \
     -a %(alhLogPath)s/%(dom)s-alarm-log.alhAlarm \
     -o %(alhLogPath)s/%(dom)s-alarm-log.alhOpmod \
     $(dirname $0)/%(dom)s.alhConfig &
