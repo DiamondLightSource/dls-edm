@@ -632,7 +632,12 @@ class GuiBuilder:
                                                                                                        
 Header = """#!/bin/sh
 # Make sure edm is on our path
-export DLS_EPICS_RELEASE=%(epics_ver)s
+if [[ $(cat /etc/redhat-release) =~ 'release 5' ]]; then
+    # Legacy RHEL5 machines use old EDM
+    export DLS_EPICS_RELEASE=R3.14.11
+else    
+    export DLS_EPICS_RELEASE=%(epics_ver)s
+fi
 source /dls_sw/etc/profile
 TOP="$(cd $(dirname "$0")/../..; pwd)"
 
