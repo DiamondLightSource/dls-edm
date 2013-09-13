@@ -18,7 +18,7 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
     ob_dict = {}
     for ob in ob_list:
         # make a dict of objects sorted by size
-        w,h = ob.getDimensions()
+        w,h = ob.getDimensions()        
         if ob_dict.has_key((w*h,w,h)):
             ob_dict[(w*h,w,h)].append(ob)
         else:
@@ -26,7 +26,8 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
     keys = ob_dict.keys()
     keys.sort()
     keys.reverse()
-    junk,max_w,max_h = keys[0] 
+    max_w = max(x[1] for x in keys)
+    max_h = max(x[2] for x in keys)    
     counter = 0
     for (junk,w,h) in keys:
         # count the number of boxes needed
