@@ -239,8 +239,8 @@ class GuiBuilder:
                     else:
                         pv = r"CALC\{%s}(%s.SEVR)" % (letters, ".SEVR,".join(pvs))                        
                 args[attr] = pv
-            # now work out a reasonable label
-            label = ob.name.replace(name + ".", "")
+            # now work out a reasonable label            
+            label = ob.name.replace(name + ".", "").replace(name.split(".")[0] + ".", "")
             # now create rds for shells
             for shell in ob.shells:
                 out.append(colour_changing_rd(0, 0, 90, 20, name = label, 
@@ -392,8 +392,14 @@ class GuiBuilder:
                 # now make the list of screen objects out of it
                 if objects:
                     sobs = self.__screenObs(o.name, objects, embedded)
-                    title_button = self.__screenObs("", [o], preferEmbed = False, preferTab = False)[0]
-                    title_button.setDimensions(sobs[-1]["w"], 20)
+                    buttons = self.__screenObs("", [o], preferEmbed = False, preferTab = False)
+                    if buttons:
+                        # if there is a screen for this already, add a button for it                    
+                        title_button = buttons[0]
+                        title_button.setDimensions(sobs[-1]["w"], 20)                        
+                    else:
+                        # otherwise just make a label
+                        title_button = label(0,0,sobs[-1]["w"],20,o.name)
                     screen_objects.append([title_button] + sobs)
         else:
             objects, embedded = self.__filter_screens(srcFilename, self.objects, \
