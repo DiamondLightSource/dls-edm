@@ -51,18 +51,20 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
     num_h = 0
     for (junk,w,h) in keys:
         obs = ob_dict[(junk,w,h)]
+        if new_layout and num_remaining > 0:
+            # if there's only a few, see if they fit in the last table            
+            will_fit = min(len(obs), num_remaining)
+            for ob in obs[:will_fit]:
+                new_layout.addObject(ob)
+                new_layout.nextCell(max_y = num_h -1)                     
+            obs = obs[will_fit:]
+            num_remaining -= will_fit        
         num_w = (max_w + small_x_border) / (w + small_x_border)
         num_h = (max_h + small_y_border) / (h + small_y_border) 
         num = num_w*num_h
         if num > 1:
-            # if there's only a few, see if they fit in the last table
-            if new_layout and num_remaining > 0:
-                will_fit = max(num, num_remaining)
-                for ob in obs[:will_fit]:
-                    new_layout.addObject(ob)
-                    new_layout.nextCell(max_y = num_h -1 )                     
-                obs = obs[will_fit:]
-                num_remaining -= will_fit
+            # More than one will fit into the size of the largest object
+            # so need to make a group for the layout
             # put any extra into new table
             num_groups = (len(obs)+num-1)/num
             groups = [obs[i:i+num] for i in [i*num for i in range(num_groups)]]
@@ -94,6 +96,8 @@ def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
 #                    new_layout.setDimensions(max_w,max_h)        
 #                num_remaining = num - len(obs)
         else:
+            # Only one will fit into the size of the largest object, so
+            # just add it to the layout directly
             for ob in obs:
                 base_layout.addObject(ob)
                 base_layout.nextCell(max_y = max_y -1 )
