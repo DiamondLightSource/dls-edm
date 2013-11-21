@@ -4,103 +4,114 @@ from edmObject import *                                # edm screen object
 from edmTable import *                                # edm table object
 from common import embed
 
-def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None):
+# this tries to make a generic screen from a list of objects using the 
+# following algorithm:
+# - Find the biggest size object big_ob
+# - For each size object
+#  - Make an EdmTable of size big_ob
+#  - Fill it with obs
+#  - If there are any spaces left then make a smaller EdmTable and iterate
+# - Tile the large layouts to fit aspect ratio
+
+# Return xborder, yborder for level of tiler
+def get_borders(level):
+    if level == 0:
+        return (15, 10)
+    elif level == 1:
+        return (10, 10)
+    else:
+        return (5, 5)
+
+class Tiler(EdmTable):
+    def __init__(self, tilerw, tilerh, obw, obh, level):
+        xborder, yborder = get_borders(level)
+        EdmTable.__init__(self, xborder = xborder, yborder = yborder)   
+        self._numw = (tilerw + xborder)/(obw + xborder)
+        self._numh = (tilerh + yborder)/(obh + yborder)
+        self._obw = obw
+        self._obh = obh
+        self._level = level
+        self._t = None
+        self._num = 0
+
+    def hasSpace(self, ob):
+        w, h = ob.getDimensions()
+        if w > self._obw or h > self._obh:
+            # Can't add something bigger than our ob width
+            return False
+        elif self._numw*self._numh - self._num > 0:
+            # There is space for another in our layout
+            return True
+        elif ob.getDimensions() == (self._obw, self._obh):
+            # No more space in this layout for one of this size
+            return False
+        elif self._t:
+            # If we have a tiler then ask it if it has a space
+            return self._t.hasSpace(ob)
+        else:
+            # No tiler and no space in us
+            return False
+
+    def addObject(self, ob):
+        assert self.hasSpace(ob), "No space left"
+        if self._t and self._t.hasSpace(ob):
+            self._t.addObject(ob)
+        else:
+            w, h = ob.getDimensions()        
+            if w != self._obw or h != self._obh:
+                self._t = Tiler(self._obw, self._obh, w, h, self._level + 1)
+                self._t.addObject(ob)
+                ob = self._t
+            EdmTable.addObject(self, ob)
+            self.nextCell(max_y = self._numh -1)
+            self._num += 1
+
+def Generic(ob_list,auto_x_y_string=None,ideal_a_r=None,max_y=None):
     """Try to make a sensible sized screen from a list of objects and return it.
     Screen has no titlebar or exit button"""
     big_x_border, big_y_border = 15,10
     small_x_border, small_y_border = 10,10
     display_w, display_h = 1280, 1024
-    screen = EdmObject("Screen")
-    base_layout = EdmTable(xborder=big_x_border,yborder=big_y_border)
-    screen.addObject(base_layout)
-    # 1st attempt, sort the objects by size, and place groups in according to
-    # how they fit it with the size of the largest object
+    # Sort the object into sized groups
     ob_dict = {}
     for ob in ob_list:
-        # make a dict of objects sorted by size
-        w,h = ob.getDimensions()        
-        if ob_dict.has_key((w*h,w,h)):
-            ob_dict[(w*h,w,h)].append(ob)
-        else:
-            ob_dict[(w*h,w,h)]=[ob]
-    keys = ob_dict.keys()
-    keys.sort()
-    keys.reverse()
-    max_w = max(x[1] for x in keys)
-    max_h = max(x[2] for x in keys)    
-    counter = 0
-    for (junk,w,h) in keys:
-        # count the number of boxes needed
-        obs = ob_dict[(junk,w,h)]
-        num_w = (max_w + small_x_border) / (w + small_x_border)
-        num_h = (max_h + small_y_border) / (h + small_y_border) 
-        num = num_w*num_h
-        assert num, "Zero size objects found in %s" % ob_list
-        counter += (len(obs)+num-1)/num
-    # fudge factors for producing nice screens
-    a_r = float(max_w)/float(max_h)
-    # fudge factors for producing nice screens
-    if ideal_a_r is None:
-        if a_r < 2 and counter > 3:
-            ideal_a_r = 2
-        else:
-            ideal_a_r = 3.5
-    max_y = math.sqrt(counter*a_r/ideal_a_r)
-    new_layout = None
-    num_remaining = 0
-    num_h = 0
-    for (junk,w,h) in keys:
-        obs = ob_dict[(junk,w,h)]
-        if new_layout and num_remaining > 0:
-            # if there's only a few, see if they fit in the last table            
-            will_fit = min(len(obs), num_remaining)
-            for ob in obs[:will_fit]:
-                new_layout.addObject(ob)
-                new_layout.nextCell(max_y = num_h -1)                     
-            obs = obs[will_fit:]
-            num_remaining -= will_fit        
-        num_w = (max_w + small_x_border) / (w + small_x_border)
-        num_h = (max_h + small_y_border) / (h + small_y_border) 
-        num = num_w*num_h
-        if num > 1:
-            # More than one will fit into the size of the largest object
-            # so need to make a group for the layout
-            # put any extra into new table
-            num_groups = (len(obs)+num-1)/num
-            groups = [obs[i:i+num] for i in [i*num for i in range(num_groups)]]
-            for group in groups:
-                new_layout = EdmTable(xborder=small_x_border,\
-                                        yborder=small_y_border)
-                base_layout.addObject(new_layout)
-                for ob in group:
-                    new_layout.addObject(ob)
-                    new_layout.nextCell(max_y = num_h -1 )
-                base_layout.nextCell(max_y = max_y -1)
-                new_layout.setDimensions(max_w,max_h)        
-                num_remaining = num - len(group)            
-            
-#            if len(groups) == 1 and new_layout and num_remaining > len(groups[0]):
-#                for ob in groups[0]:
-#                    new_layout.addObject(ob)
-#                    new_layout.nextCell(max_y = num_h -1 )                    
-#                num_remaining -= len(groups[0])
-#            else:
-#                for group in groups:
-#                    new_layout = EdmTable(xborder=small_x_border,\
-#                                          yborder=small_y_border)
-#                    base_layout.addObject(new_layout)
-#                    for ob in group:
-#                        new_layout.addObject(ob)
-#                        new_layout.nextCell(max_y = num_h -1 )
-#                    base_layout.nextCell(max_y = max_y -1)
-#                    new_layout.setDimensions(max_w,max_h)        
-#                num_remaining = num - len(obs)
-        else:
-            # Only one will fit into the size of the largest object, so
-            # just add it to the layout directly
-            for ob in obs:
-                base_layout.addObject(ob)
-                base_layout.nextCell(max_y = max_y -1 )
+        ob_dict.setdefault(ob.getDimensions(), []).append(ob)    
+    # Find the biggest object size
+    max_w = max(w for w,h in ob_dict)
+    max_h = max(h for w,h in ob_dict)        
+    # This is the list of obs that will make up the final screen
+    base_obs = []
+    # Tile each group
+    for w,h in reversed(sorted(ob_dict, key=lambda x: x[0]*x[1])):
+        obs = ob_dict[(w,h)]
+        while obs:
+            ob = obs.pop(0)
+            if len(base_obs) == 0 or not base_obs[-1].hasSpace(ob):
+                base_obs.append(Tiler(max_w, max_h, w, h, 1))            
+            base_obs[-1].addObject(ob)
+    # now make the screen
+    screen = EdmObject("Screen")
+    # work out how high to tile these objects
+    if max_y is None:
+        a_r = float(max_w)/float(max_h)    
+        if ideal_a_r is None:
+            if a_r < 2 and len(base_obs) > 3:
+                ideal_a_r = 2
+            else:
+                ideal_a_r = 3.5
+        # fudge factors for producing nice screens
+        max_y = int(math.sqrt(len(base_obs)*a_r/ideal_a_r))
+    else:
+        max_y = max_y - 1
+    # Tile them
+    xborder, yborder = get_borders(0)
+    base_layout = EdmTable(xborder = xborder, yborder = yborder)
+    screen.addObject(base_layout)
+    # Add objects
+    for ob in base_obs:
+        base_layout.addObject(ob)
+        base_layout.nextCell(max_y = max_y)
+    # Finish up
     screen.autofitDimensions()
     if auto_x_y_string:
         w,h = screen.getDimensions()
