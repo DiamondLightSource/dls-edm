@@ -346,7 +346,83 @@ class GuiBuilder:
                 ob.screens = newscreens
                 objects.append(ob)
         return objects, embedded
-                            
+
+    def makeList(self, srcFiles, dstFiles, group):
+        objectList = []
+        embedded = None
+        for srcFilename, destFilename in zip(srcFiles, dstFiles):
+            objects, embedded = self.__filter_screens(
+                srcFilename, group.children, destFilename)
+            objectList.extend(objects)
+        return objectList, embedded
+
+    def multiFileSummary(self, typ, srcFiles, dstFiles = None,
+                         embedded = None, group = True,
+                         groupByName = False, aspectRatio = 1.5):
+        '''find objects with screen names as in srcFiles and 
+        create a summary screen. Optional dstFiles can be used 
+        to replace to a different filename used for the summary'''
+        if dstFiles == None:
+            # Generate a list of "None" to match srcFiles by length
+            dstFiles = []
+            for i in range(len(srcFiles)):
+                dstFiles.append(None)
+        else:
+            assert len(dstFiles) == len(srcFiles), \
+                "len of srcFiles and dstFiles must match"
+        filename = self.__safe_filename(self.dom + "-" + 
+                                        typ.lower() + ".edl")
+        if self.errors:        
+            print "Creating %s" % filename
+        screen = EdmObject("Screen")
+        table = EdmTable(yborder=5)
+        screen.addObject(table)
+        headerText = "%s Summary" % typ   
+        # only group == True case implemented
+        assert(group) , "group == False case not implemented" 
+        assert( not groupByName), "groupByName case not implemented"
+        groupObjects = self.objects
+        screen_objects = []
+        # group by parent object
+        for o in groupObjects:
+            # if no child objects then don't need to do anything
+            if not o.children:
+                continue
+            # first make a new object list
+            objects, embedded = self.makeList(srcFiles, dstFiles, o)
+            # now make the list of screen objects out of it
+            if objects:
+                sobs = self.__screenObs(o.name, objects, embedded)
+                buttons = self.__screenObs("", [o], preferEmbed = False, preferTab = False)
+                if buttons:
+                    # if there is a screen for this already, add a button for it                    
+                    title_button = buttons[0]
+                    title_button.setDimensions(sobs[-1]["w"], 20)                        
+                else:
+                    # otherwise just make a label
+                    title_button = label(0,0,sobs[-1]["w"],20,o.name)
+                screen_objects.append([title_button] + sobs)
+        # end of case  "group == True"
+        if screen_objects:
+            w,h = screen_objects[0][-1].getDimensions()
+            numobs = sum([len(o) for o in screen_objects])
+            nrows = int(sqrt(numobs*w/(aspectRatio*h))+1)
+            for oblist in screen_objects:
+                # if entire component doesn't fit in column, create a new one
+                if len(oblist) + table["__def_y"] > nrows:
+                    table.nextCol()
+                for ob in oblist:
+                    table.addObject(ob)
+                    table.nextCell(max_y=nrows)
+            screen.autofitDimensions()
+            table.ungroup()
+            Titlebar(screen, button = "text", 
+                     button_text = self.dom, header = "text",
+                     header_text = headerText, tooltip = "generic-tooltip",
+                     title = headerText)
+            Substitute_embed(screen,[],{})  
+        open(filename, "w").write(screen.read())
+
     def summary(self, typ, srcFilename, destFilename = None, 
             embedded = None, group = True, groupByName = False, ar = 1.5):
         '''Take a GBScreen object srcOb, find all like it, and display them all
@@ -368,7 +444,7 @@ class GuiBuilder:
         screen_objects = []
         if group:
             if groupByName:
-                # make a tree heirarachy according to . in names
+                # make a tree hierarchy according to . in names
                 groupObjects = []
                 for o in self.objects:
                     if len(o.name.split(".", 1)) == 1:
@@ -394,7 +470,7 @@ class GuiBuilder:
                     sobs = self.__screenObs(o.name, objects, embedded)
                     buttons = self.__screenObs("", [o], preferEmbed = False, preferTab = False)
                     if buttons:
-                        # if there is a screen for this already, add a button for it                    
+                        # if there is a screen for this already, add a button for it         
                         title_button = buttons[0]
                         title_button.setDimensions(sobs[-1]["w"], 20)                        
                     else:
@@ -439,8 +515,8 @@ class GuiBuilder:
         self.summary("Interlocks", "interlock-embed-small.edl", group = False, embedded = True)        
 
     def temperatureSummary(self):
-        '''Create an interlock summary <dom>-interlocks.edl'''
-        self.summary("Temperatures", "temperature-embed.edl", embedded = True)        
+        '''Create a temperatures summary <dom>-temperatures.edl'''
+        self.summary("Temperatures", "temperature-embed.edl", embedded = True)
 
     def flowSummary(self):
         '''Create an interlock summary <dom>-interlocks.edl'''
@@ -697,6 +773,7 @@ alh -D -S $(dirname $0)/%(dom)s.alhConfig
 """
 
 Alhserver = r"""#!/bin/sh
+source /dls_sw/etc/profile
 if [ ! -d %(alhLogPath)s ]; then
     mkdir -m 775 -p %(alhLogPath)s
 fi
