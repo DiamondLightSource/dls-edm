@@ -473,9 +473,9 @@ class EdmObject:
         """substitute(old_text,new_text) -> None Replace each instance of
         old_text with new_text in every property value, and every child
         object"""
-        for key,value in self.items():
-            if rep == "''" and key not in ["symbols"]:
-                new = ""
+        for key,value in self.items():            
+            if rep == "''":
+                new = ""            
             else:
                 new = rep
             if type(value) == list:
@@ -484,7 +484,16 @@ class EdmObject:
                 # output a multiline dict
                 for k,v in value.items():
                     try:
-                        value[k]=v.replace(old,new)
+                        result = v.replace(old,new)
+                        # if we are in a symbols dict then take care that we
+                        # leave '' values for empty substitutions                        
+                        if key == "symbols":                            
+                            bits = [x.split("=") for x in unquoteString(result).split(",")]
+                            for i, b in enumerate(bits):
+                                if len(b) > 1 and b[1] == "":
+                                    bits[i] = (b[0], "''")
+                            result = quoteString(",".join("=".join(x) for x in bits))
+                        value[k] = result                        
                     except AttributeError:
                         pass
             else:
@@ -516,6 +525,13 @@ def quoteString(string):
         string = string.replace(e,"\\"+e) 
     return '"'+string+'"'
 
+def unquoteString(string):
+    """unquoteString(string) -> String
+    Helper function to reverse quoteString."""
+    escape_list = ["\\","{","}",'"']
+    for e in escape_list:
+        string = string.replace("\\"+e, e) 
+    return string.strip('"')
     
 def quoteListString(string):
     """quoteListString(string) -> List
