@@ -444,6 +444,9 @@ class EdmObject:
         Return a tuple of the x position and y position of self as integers"""
         return self["x"],self["y"]
     
+    def toint(self, s):
+        return int("".join(x for x in str(s) if x.isdigit()))
+    
     def setPosition(self,x,y,relative=False,move_objects=True):
         """setPosition(x,y,relative=False,move_objects=True) -> None
         Set the position of self to be x,y. If relative, new_x,new_y = 
@@ -463,9 +466,9 @@ class EdmObject:
                 ob.setPosition(deltax,deltay,relative=True)
         elif self.Type=="Lines" and self.has_key("xPoints") and self["xPoints"]:
             for point in self["xPoints"].keys():
-                self["xPoints"][point]=str(int(self["xPoints"][point])+deltax)
+                self["xPoints"][point]=str(self.toint(self["xPoints"][point])+deltax)
             for point in self["yPoints"].keys():
-                self["yPoints"][point]=str(int(self["yPoints"][point])+deltay)
+                self["yPoints"][point]=str(self.toint(self["yPoints"][point])+deltay)
         self["x"] = newx
         self["y"] = newy
 

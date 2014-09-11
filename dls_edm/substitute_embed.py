@@ -87,9 +87,8 @@ class Substitute_embed:
                     macros = {}
                     for sub in ob["symbols"][i].split(","):
                         l = [ x.strip() for x in sub.strip('"').split("=") ]
-                        assert len(l)==2, "Badly formed macro substitution "+\
-                               "line: "+sub
-                        macros[l[0]] = l[1]
+                        if len(l) == 2:
+                            macros[l[0]] = l[1]
                     group,new_outsiders = self.__group_from_screen(\
                                                 ob["displayFileName"][i],macros)
                     if group:

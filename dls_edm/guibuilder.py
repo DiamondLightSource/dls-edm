@@ -239,8 +239,10 @@ class GuiBuilder:
                     else:
                         pv = r"CALC\{%s}(%s.SEVR)" % (letters, ".SEVR,".join(pvs))                        
                 args[attr] = pv
-            # now work out a reasonable label            
-            label = ob.name.replace(name + ".", "").replace(name.split(".")[0] + ".", "")
+            # now work out a reasonable label
+            label = ob.name
+            if name:            
+                label = label.replace(name + ".", "").replace(name.split(".")[0] + ".", "")
             # now create rds for shells
             for shell in ob.shells:
                 out.append(colour_changing_rd(0, 0, 90, 20, name = label, 
@@ -424,7 +426,7 @@ class GuiBuilder:
         open(filename, "w").write(screen.read())
 
     def summary(self, typ, srcFilename, destFilename = None, 
-            embedded = None, group = True, groupByName = False, ar = 1.5):
+            embedded = None, group = True, groupByName = False, ar = 1.5, extras = []):
         '''Take a GBScreen object srcOb, find all like it, and display them all
         in a summary screen. If obFilename then use obFilename instead. If 
         embedded then use embedded instead'''
@@ -482,6 +484,12 @@ class GuiBuilder:
                 destFilename, embedded)
             if objects:
                 screen_objects.append(self.__screenObs("", objects, embedded))          
+        # now add in the extras
+        if len(screen_objects) > 0 and len(extras) > 0:
+            sobs = self.__screenObs("", extras, preferEmbed = False, preferTab = False)
+            for s in sobs:
+                s.setDimensions(screen_objects[-1][-1]["w"], s["h"])
+            screen_objects.append(sobs)
         if screen_objects:              
             w,h = screen_objects[0][-1].getDimensions()          
             numobs = sum([len(o) for o in screen_objects])
@@ -514,9 +522,23 @@ class GuiBuilder:
         '''Create an interlock summary <dom>-interlocks.edl'''
         self.summary("Interlocks", "interlock-embed-small.edl", group = False, embedded = True)        
 
-    def temperatureSummary(self):
+    def temperatureSummary(self, bms = True):
         '''Create a temperatures summary <dom>-temperatures.edl'''
-        self.summary("Temperatures", "temperature-embed.edl", embedded = True)
+        extras = []
+        if bms:
+            # First create BMS button objects
+            bms_lines = open("/dls_sw/prod/etc/init/BMS_pvs.csv").readlines()
+            ids = {}
+            for line in bms_lines:
+                split = line.split("|")
+                # id, desc, ....., pv
+                if len(split) > 3 and self.dom.replace("BL", "SV") in split[-1]:
+                    ids[split[0].strip('"')] = split[1].strip('"')
+            for id, desc in ids.items():
+                ob = self.object("%s BMS" % desc)
+                ob.addScreen("DLS_dev%s.edl" % id)
+                extras.append(ob)
+        self.summary("Temperatures", "temperature-embed.edl", embedded = True, extras = extras)        
 
     def flowSummary(self):
         '''Create an interlock summary <dom>-interlocks.edl'''

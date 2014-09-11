@@ -128,6 +128,23 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
     elif vtype=="eloss":
         ob =  embed(0,0,156,22,"BLGui-eloss-key","a=b")
         table.addObject(ob)
+    elif vtype=="temp":
+        bms_lines = open("/dls_sw/prod/etc/init/BMS_pvs.csv").readlines()
+        ids = {}
+        for line in bms_lines:
+            split = line.split("|")
+            # id, desc, ....., pv            
+            if len(split) > 3 and domain.replace("BL", "SV") in split[-1]:
+                ids[split[0].strip('"')] = split[1].strip('"')
+        for i, (id, desc) in enumerate(ids.items()):
+            if len(ids) > 1:
+                txt = "BMS%d" % (i+1)
+            else:
+                txt = "BMS"                
+            ob = rd_visible(0,0,90,20,txt,"DLS_dev%s.edl" % id)
+            ob["fgColor"] = ob.Colour["Related display"]
+            table.addObject(ob)
+            table.nextCell()
     else:
         interlock = rd_visible(0,0,90,20,"Interlocks",domain+"-interlocks")
         interlock["fgColor"] = interlock.Colour["Related display"]
