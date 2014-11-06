@@ -114,6 +114,8 @@ class GuiBuilder:
         # populate them from our elements        
         for node in self._elements(c_node):
             name = str(node.nodeName)
+            if name == "Def":
+                name = str(node.getAttribute("name"))
             gob = self.object(name)
             # for each object name, populate screens shells and records
             for ob in self._elements(node):
