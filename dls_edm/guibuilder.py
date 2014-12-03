@@ -807,6 +807,6 @@ alh -m 0 -T \
     $(dirname $0)/%(dom)s.alhConfig &
 """
 
-Fe = "/dls_sw/prod/etc/Launcher/FrontEnd_QT.sh %(FEdom)s"
+Fe = "/dls_sw/prod/etc/Launcher/feqt4gui.py %(FEdom)s"
 
 Burt = "if [ -d $1 ]; then cd $1; fi; burtgooey"
