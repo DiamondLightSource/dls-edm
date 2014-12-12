@@ -692,9 +692,9 @@ class GuiBuilder:
             self.dom+"App/opi/edl")            
         BLpath = self.RELEASE.replace("configure/RELEASE","data")
         # format paths for release tree
-        devpaths = "".join(['    export EDMDATAFILES="${EDMDATAFILES}%s:"\n'%x \
+        devpaths = "".join(['    EDMDATAFILES="${EDMDATAFILES}%s:"\n'%x \
             for x in self.devpaths])
-        paths = "".join(['export EDMDATAFILES="${EDMDATAFILES}:%s"\n'%x \
+        paths = "".join(['EDMDATAFILES="${EDMDATAFILES}:%s"\n'%x \
             for x in self.paths])
         # open the file
         f = open(filename, "w")
@@ -735,21 +735,21 @@ TOP="$(cd $(dirname "$0")/../..; pwd)"
 
 # first load the paths. These have been generated from the configure/RELEASE
 # tree. If we have a -d arg then load the opi/edl paths first
+shopt -s nullglob
 unset EDMDATAFILES
 if [ "$1" = "-d" ]; then
-    if ls ${TOP}/*App/opi/edl > /dev/null 2>&1; then
-        for d in ${TOP}/*App/opi/edl; do
-            export EDMDATAFILES="${EDMDATAFILES}${d}:"
-        done
-    fi
-    export EDMDATAFILES="${EDMDATAFILES}${TOP}/data:"
+    for d in ${TOP}/*App/opi/edl; do
+        EDMDATAFILES="${EDMDATAFILES}${d}:"
+    done
+    EDMDATAFILES="${EDMDATAFILES}${TOP}/data:"
 %(devpaths)s
     OPTS="-x -eolc"
 else
     OPTS="-x -eolc -noedit"
 fi
-export EDMDATAFILES="${EDMDATAFILES}${TOP}/data"
+EDMDATAFILES="${EDMDATAFILES}${TOP}/data"
 %(paths)s
+export EDMDATAFILES
 """
 
 SetPath = """
