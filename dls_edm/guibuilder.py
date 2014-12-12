@@ -698,12 +698,6 @@ class GuiBuilder:
             for x in self.paths])
         # open the file
         f = open(filename, "w")
-        # work out epics version
-        epics_ver = re.findall(r"(R\d(?:\.\d+)+)", os.path.abspath(filename))
-        if epics_ver:            
-            epics_ver = epics_ver[0]
-        else:
-            epics_ver = "R3.14.11"
         # first put the header in
         f.write(Header % locals())
         # now prepend EDMDATAFILES onto the PATH
@@ -737,14 +731,6 @@ class GuiBuilder:
             self.__writeBLScript("burt", Burt % locals())
                                                                                                        
 Header = """#!/bin/sh
-# Make sure edm is on our path
-if [[ $(cat /etc/redhat-release) =~ 'release 5' ]]; then
-    # Legacy RHEL5 machines use old EDM
-    export DLS_EPICS_RELEASE=R3.14.11
-else    
-    export DLS_EPICS_RELEASE=%(epics_ver)s
-fi
-source /dls_sw/etc/profile
 TOP="$(cd $(dirname "$0")/../..; pwd)"
 
 # first load the paths. These have been generated from the configure/RELEASE
