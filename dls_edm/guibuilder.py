@@ -140,8 +140,6 @@ class GuiBuilder:
                         sevr = False
                     # now make a GBRecord out of it
                     gob.addRecord(str(ob.getAttribute("pv")), sevr)
-                else:
-                    raise TypeError, "%s is not a valid element type" % typ                     
 
     def _elements(self, xml):
         return [n for n in xml.childNodes if n.nodeType == n.ELEMENT_NODE]        
