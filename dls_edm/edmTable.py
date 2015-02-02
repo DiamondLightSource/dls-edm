@@ -140,12 +140,18 @@ class EdmTable(EdmObject):
                 else:
                     dim_dict[axis]=val
         # calculate the max or each row and column
-        ws = [0]*( max( max_width.keys() )+1 )
-        for key in max_width.keys():
-            ws[key] = max_width[key]
-        hs = [0]*( max( max_height.keys())+1 )
-        for key in max_height.keys():
-            hs[key] = max_height[key]
+        if max_width:
+            ws = [0]*( max( max_width.keys() )+1 )
+            for key in max_width.keys():
+                ws[key] = max_width[key]
+        else:
+            ws = [0]
+        if max_height:
+            hs = [0]*( max( max_height.keys())+1 )
+            for key in max_height.keys():
+                hs[key] = max_height[key]
+        else:
+            hs = [0]
         return ws,hs
 
                                 
