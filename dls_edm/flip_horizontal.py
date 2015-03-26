@@ -42,7 +42,9 @@ def Flip_horizontal(screen,paths,flip_group_contents=False):
                 for ob2 in [ o for o in ob.flatten() if o.Type == "Symbol" ]:
                     # replace symbols with their flipped version if applicable
                     filename = ob2["file"].strip('"').replace(\
-                        "-symbol.edl","-flipped-symbol.edl")
+                        "-symbol","-flipped-symbol")
+                    if filename[-4:] != ".edl":
+                        filename += ".edl"
                     if filename in files:           
                         ob2["file"] = quoteString(filename.replace(".edl",""))
             if flip_group_contents or not symbols or\
