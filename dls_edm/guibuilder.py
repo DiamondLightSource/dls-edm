@@ -791,6 +791,8 @@ alh -m 0 -T \
     $(dirname $0)/%(dom)s.alhConfig &
 """
 
-Fe = "/dls_sw/prod/etc/Launcher/feqt4gui.py %(FEdom)s"
+Fe = "/dls_sw/prod/etc/Launcher/script_from_dir.sh " +\
+     "$EPICS_CA_SERVER_PORT feqt4-wrapper-gui" + \
+     " feqt4gui.sh %(FEdom)s\n"
 
 Burt = "if [ -d $1 ]; then cd $1; fi; burtgooey"
