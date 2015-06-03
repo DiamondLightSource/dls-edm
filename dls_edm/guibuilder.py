@@ -719,7 +719,15 @@ class GuiBuilder:
         '''Create the standard set of beamline scripts to run alh, FE, etc'''
         dom = self.dom
         if fe:
-            FEdom = dom.replace("BL","FE")
+            if dom in ("BL07C"):
+                FEdom = ("FE"+dom[2:4]+"B")
+            # The following J beamlines are individual beamlines but share 
+            # the front end screens of their neighbouring I beamlines
+            elif dom in ("BL04J", "BL11J", "BL15J", "BL20J"):
+                FEdom = ("FE"+dom[2:4]+"I")
+            # All other beamlines have their own front end screens
+            else:
+                FEdom = ("FE"+dom[2:5])        
             self.__writeBLScript("fe", Fe % locals())
         if alh:
             alhLogPath = "/dls/%s/epics/alh" % (dom[4].lower() + dom[2:4])
