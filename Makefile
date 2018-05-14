@@ -25,7 +25,6 @@ clean:
 	-rm -rf build dist *egg-info installed.files
 	# Don't remove helper.pkl for now since we can't build it yet.
 	#-rm -rf dls_edm/helper.pkl
-	-rm -rf prefix
 	-find -name '*.pyc' -exec rm {} \;
 	$(MAKE) -C documentation clean	
 
