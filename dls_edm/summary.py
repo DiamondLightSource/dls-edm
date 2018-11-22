@@ -80,7 +80,7 @@ def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):
                 if vtype=="motor":
                     xs = 110
                     ob = shell_visible(0,0,xs,20,"Home "+dict["NAME"],
-                            'gnome-terminal --disable-factory --hide-menubar -t "Home %s" -e "$(dom)-motorhome.py %s"'
+                            'gnome-terminal --hide-menubar -e "$(dom)-motorhome.py %s"'
                             %(dict["NAME"],dict["NAME"]) )
                     table.addObject(ob,xoff=xs)
                     xoff = -xs                 
