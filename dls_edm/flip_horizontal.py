@@ -7,8 +7,8 @@ This script takes an edm screen and flips it horizontally, keeping groups intact
 
 import os,sys
 from optparse import OptionParser
-from edmObject import *
-from common import flip_axis
+from .edmObject import *
+from .common import flip_axis
 
 def Flip_horizontal(screen,paths,flip_group_contents=False):
     """Flip the screen object, and return it with changes applied. paths gives the
@@ -22,7 +22,7 @@ def Flip_horizontal(screen,paths,flip_group_contents=False):
     for ob in screen.Objects:
         # check groups' dimensions exactly enclose their contents
         ob.autofitDimensions()
-        if ob.has_key("visPv"):
+        if "visPv" in ob:
             visPv = ob["visPv"].strip('"')
         else:
             visPv = ""
@@ -70,10 +70,10 @@ def Flip_horizontal(screen,paths,flip_group_contents=False):
     return screen
 
 def flip_lines(ob):
-    if ob.has_key("xPoints") and ob["xPoints"]:
+    if "xPoints" in ob and ob["xPoints"]:
         ob2x,ob2y = ob.getPosition()
         ob2w,ob2h = ob.getDimensions()
-        for key in ob["xPoints"].keys():
+        for key in list(ob["xPoints"].keys()):
             px = int(ob["xPoints"][key])
             ob["xPoints"][key] = str(ob2x+ob2w-(px-ob2x))
                                     
@@ -93,7 +93,7 @@ def cl_flip_horizontal():
     screen.write(open(args[0],"r").read())
     Flip_horizontal(screen,paths)
     open(args[1],"w").write(screen.read())
-    print args[0]+ " has been flipped. Output written to: "+args[1]
+    print(args[0]+ " has been flipped. Output written to: "+args[1])
 
 if __name__ == "__main__":
     cl_flip_horizontal()

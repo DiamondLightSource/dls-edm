@@ -2,13 +2,13 @@ from optparse import OptionParser
 from xml.dom import minidom
 from copy import copy
 import sys, re, os
-from substitute_embed import Substitute_embed
-from generic import Generic
-from edmObject import EdmObject, quoteString
-from edmTable import EdmTable
-from flip_horizontal import Flip_horizontal
-from titlebar import Titlebar
-from common import embed, rd_visible, label, colour_changing_rd, lines
+from .substitute_embed import Substitute_embed
+from .generic import Generic
+from .edmObject import EdmObject, quoteString
+from .edmTable import EdmTable
+from .flip_horizontal import Flip_horizontal
+from .titlebar import Titlebar
+from .common import embed, rd_visible, label, colour_changing_rd, lines
 from math import sqrt
 
 class GBObject(object):
@@ -35,7 +35,7 @@ class GBObject(object):
             if not v.strip(): 
                 v = "''"
             mdict[k.strip()] = v.strip()     
-        macros = ','.join(["%s=%s" %x for x in mdict.items()])            
+        macros = ','.join(["%s=%s" %x for x in list(mdict.items())])            
         self.screens.append(GBScreen(filename, macros, embedded, tab))  
         if embedded == False and tab == False:
             for k,v in [x.split("=") for x in macros.split(",") if x]:
@@ -127,7 +127,7 @@ class GuiBuilder:
                     elif typ == "edmtab":
                         args["tab"] = True                        
                     # now make a GBScreen out of it                    
-                    for k,v in ob.attributes.items():
+                    for k,v in list(ob.attributes.items()):
                         args[str(k)] = str(v)
                     gob.addScreen(**args)
                 elif typ in ["shell"]:
@@ -158,9 +158,9 @@ class GuiBuilder:
 
     def error(self, text):
         if self.errors == ERROR:
-            raise AssertionError, text
+            raise AssertionError(text)
         elif self.errors == WARN:
-            print >> sys.stderr, "***Warning: " + text
+            print("***Warning: " + text, file=sys.stderr)
     
     def object(self, name, desc="", P="", obs = [], filename = None, macrodict = None, 
             preferEmbed = True, preferTab = True, substituteEmbed = True, ar = None, d = ".", max_y = None):
@@ -184,17 +184,17 @@ class GuiBuilder:
             self.__writeRecord(ob, obs)
             
         # if we are not given a filename, we should make a screen for it
-        macros = ",".join("%s=%s" % x for x in macrodict.items())
+        macros = ",".join("%s=%s" % x for x in list(macrodict.items()))
         if filename is None and obs:
             filename = d + "/" + name + ".edl"
             if self.errors:
-                print "Creating screen for %s" % name
+                print("Creating screen for %s" % name)
             screenobs = self.__screenObs(name, obs, preferEmbed, preferTab)
             if screenobs:
                 # only one display which is not embedded, so just add launch this screen
                 if len(screenobs) == 1 and screenobs[0].Type == "Group" and screenobs[0].Objects[0].Type == "Related Display":
                     filename = screenobs[0].Objects[0]["displayFileName"][0].strip('"')       
-                    if "symbols" in screenobs[0].Objects[0].keys():             
+                    if "symbols" in list(screenobs[0].Objects[0].keys()):             
                         macros = screenobs[0].Objects[0]["symbols"][0].strip('"')
                     else:
                         macros = ""
@@ -375,7 +375,7 @@ class GuiBuilder:
         filename = self.__safe_filename(self.dom + "-" + 
                                         typ.lower() + ".edl")
         if self.errors:        
-            print "Creating %s" % filename
+            print("Creating %s" % filename)
         screen = EdmObject("Screen")
         table = EdmTable(yborder=5)
         screen.addObject(table)
@@ -433,7 +433,7 @@ class GuiBuilder:
         # this is the filename of the generated screen
         filename = self.__safe_filename(self.dom + "-" + typ.lower() + ".edl")
         if self.errors:        
-            print "Creating %s" % filename
+            print("Creating %s" % filename)
         # this is the filename for each object put on screens
         if destFilename is None:
             destFilename = srcFilename
@@ -534,7 +534,7 @@ class GuiBuilder:
                 # id, desc, ....., pv
                 if len(split) > 3 and self.dom.replace("BL", "SV") in split[-1]:
                     ids[split[0].strip('"')] = split[1].strip('"')
-            for id, desc in ids.items():
+            for id, desc in list(ids.items()):
                 ob = self.object("%s BMS" % desc)
                 ob.addScreen("DLS_dev%s.edl" % id)
                 extras.append(ob)
@@ -561,7 +561,7 @@ class GuiBuilder:
         groups = [ ob for ob in screen.Objects if ob.Type=="Group" ]
         for group in groups:
             # the vis PV is checked for tags
-            if group.has_key("visPv"):
+            if "visPv" in group:
                 visPv = group["visPv"].strip('"')
             else:
                 visPv=""
@@ -594,7 +594,7 @@ class GuiBuilder:
                             self.error("Cannot find component %s. Group has " \
                                 "not been autofilled." % device_name)
                         continue
-                    for key, val in dicts[0].items():
+                    for key, val in list(dicts[0].items()):
                         group.substitute("#<"+key+">#",val)
                     group["visPv"] = group["visPv"].replace( \
                         "#<"+device_name+">#", "")

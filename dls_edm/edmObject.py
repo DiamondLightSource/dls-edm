@@ -5,7 +5,7 @@
 This file contains a python representation of an edm object with associated
 useful functions."""
 
-import os, re, sys, shutil, cPickle, copy
+import os, re, sys, shutil, pickle, copy
 
 class EdmObject:
 
@@ -94,7 +94,7 @@ class EdmObject:
         copy does not have a Parent defined."""
         new_ob = EdmObject(self.Type,defaults=False)
         # need to explicitly copy some properties
-        for k,v in self.items():
+        for k,v in list(self.items()):
             if v.__class__=={}.__class__:
                 new_ob[k]=v.copy()
             elif v.__class__==[].__class__:
@@ -203,7 +203,7 @@ class EdmObject:
         # internal function to export values of filter_keys if they exist
         lines = []
         # key_set is the set of all property keys
-        keys = self.keys()
+        keys = list(self.keys())
         key_set = set(keys)
         # filter_set is the set of keys to filter against
         filter_set = set(filter_keys)
@@ -213,7 +213,7 @@ class EdmObject:
             'Some required keys not defined: '+str(list(filter_set - key_set))
         # Make sure related displays with no filenames have the right numDsps
         if self.Type=="Related Display":
-            if "displayFileName" in self.keys() and len(self["displayFileName"].keys()) == 1 and self["displayFileName"][self["displayFileName"].keys()[0]] == '""':
+            if "displayFileName" in list(self.keys()) and len(list(self["displayFileName"].keys())) == 1 and self["displayFileName"][list(self["displayFileName"].keys())[0]] == '""':
                 self["displayFileName"] = {}
                 self["symbols"] = {}
                 self["numDsps"] = 0
@@ -232,7 +232,7 @@ class EdmObject:
                             lines.append(key + ' {\n' + ''.join(text_vals) + '}')
                     elif value.__class__ == {}.__class__:
                         # output a multiline dict
-                        vals = value.keys()
+                        vals = list(value.keys())
                         vals.sort()
                         text_vals = ['  %s %s\n' % (str(k), str(value[k])) \
                                      for k in vals]
@@ -384,9 +384,9 @@ class EdmObject:
         elif self.Type=="Group":
             self.setDimensions(maxx-minx,maxy-miny,resize_objects=False)
             self.setPosition(minx,miny,move_objects=False)
-        elif self.Type=="Lines" and self.has_key("xPoints") and self["xPoints"]:
-            xpts = [ int(self["xPoints"][x]) for x in self["xPoints"].keys() ]
-            ypts = [ int(self["yPoints"][y]) for y in self["yPoints"].keys() ]
+        elif self.Type=="Lines" and "xPoints" in self and self["xPoints"]:
+            xpts = [ int(self["xPoints"][x]) for x in list(self["xPoints"].keys()) ]
+            ypts = [ int(self["yPoints"][y]) for y in list(self["yPoints"].keys()) ]
             self["x"],self["y"] = min(xpts),min(ypts)
             self["w"],self["h"] = max(xpts)-min(xpts),max(ypts)-min(ypts)
                         
@@ -424,18 +424,18 @@ class EdmObject:
                 obx,oby = ob.getPosition()
                 ob.setPosition(int(factorw*(obx-x)+x),int(factorh*(oby-y)+y))
                 ob.setDimensions(factorw,factorh,factors=True)
-        elif self.Type=="Lines" and self.has_key("xPoints") and \
+        elif self.Type=="Lines" and "xPoints" in self and \
                   self["xPoints"] and resize_objects:
-            for point in self["xPoints"].keys():
+            for point in list(self["xPoints"].keys()):
                 self["xPoints"][point]=str(int( factorw*(int(\
                                                 self["xPoints"][point] )-x)+x ))
-            for point in self["yPoints"].keys():
+            for point in list(self["yPoints"].keys()):
                 self["yPoints"][point]=str(int( factorh*(int(\
                                                 self["yPoints"][point] )-y)+y ))
         elif "Image" in self.Type and resize_objects:
-            print >> sys.stderr, "***Warning: EDM Image container for "+\
+            print("***Warning: EDM Image container for "+\
                   self["file"]+" has been resized. "+\
-                  "Image may not display properly"
+                  "Image may not display properly", file=sys.stderr)
         self["w"] = neww
         self["h"] = newh
     
@@ -464,10 +464,10 @@ class EdmObject:
         if self.Type=="Group" and move_objects:
             for ob in self.Objects:
                 ob.setPosition(deltax,deltay,relative=True)
-        elif self.Type=="Lines" and self.has_key("xPoints") and self["xPoints"]:
-            for point in self["xPoints"].keys():
+        elif self.Type=="Lines" and "xPoints" in self and self["xPoints"]:
+            for point in list(self["xPoints"].keys()):
                 self["xPoints"][point]=str(self.toint(self["xPoints"][point])+deltax)
-            for point in self["yPoints"].keys():
+            for point in list(self["yPoints"].keys()):
                 self["yPoints"][point]=str(self.toint(self["yPoints"][point])+deltay)
         self["x"] = newx
         self["y"] = newy
@@ -476,7 +476,7 @@ class EdmObject:
         """substitute(old_text,new_text) -> None Replace each instance of
         old_text with new_text in every property value, and every child
         object"""
-        for key,value in self.items():            
+        for key,value in list(self.items()):            
             if rep == "''":
                 new = ""            
             else:
@@ -485,7 +485,7 @@ class EdmObject:
                 self[key] = [ o.replace(old,new) for o in value ]
             elif type(value) == dict:
                 # output a multiline dict
-                for k,v in value.items():
+                for k,v in list(value.items()):
                     try:
                         result = v.replace(old,new)
                         # if we are in a symbols dict then take care that we
@@ -551,7 +551,7 @@ def write_helper():
     to indexes. It then pickles these dictionaries, writing them to file. When
     EdmObject in imported again, these dictionaries are read and imported, and
     used to provide some sensible options for a default object."""
-    print "Building helper object..."
+    print("Building helper object...")
     cwd = os.getcwd()
     build_dir = os.path.abspath(os.path.dirname(__file__))
     # load the environment so we can find the epics location
@@ -589,7 +589,7 @@ def write_helper():
     line = "g++ -fPIC "+" ".join(dirs)+\
               " -shared act_save.cc -o act_save.so -Wl,-rpath="+lib_path+\
               " -L"+lib_path+" -lEdmBase"
-    print line              
+    print(line)              
     os.system(line)              
     # run it
     os.system("env LD_PRELOAD=./act_save.so edm -crawl dummy.edl")
@@ -635,12 +635,12 @@ def write_helper():
         ob["x"]=0
         ob["y"]=0
         for key in ["font","fgColor","bgColor"]:
-            if ob.has_key(key):
+            if key in ob:
                 ob[key] = screen_properties[key]
         if ob.Type=="Lines":
             del(ob["xPoints"])
             del(ob["yPoints"])
-        for key,item in ob.items():
+        for key,item in list(ob.items()):
             # remove anything that edm regards as a flag
             # this avoids 
             if item==True:
@@ -650,10 +650,10 @@ def write_helper():
         PROPERTIES[ob.Type] = ob.Properties.copy()
     os.chdir(build_dir)
     output = open("helper.pkl","wb")
-    cPickle.dump((COLOUR,PROPERTIES),output,-1)
+    pickle.dump((COLOUR,PROPERTIES),output,-1)
     output.close()
     os.chdir(cwd)
-    print "Done"
+    print("Done")
 
 # code to load the stored dictionaries      
 cwd = os.getcwd()
@@ -661,7 +661,7 @@ try:
     build_dir = os.path.abspath(os.path.dirname(__file__))
     os.chdir(build_dir)
     file = open('helper.pkl', 'rb')
-    (COLOUR,PROPERTIES) = cPickle.load(file)
+    (COLOUR,PROPERTIES) = pickle.load(file)
 except IOError:
     (COLOUR,PROPERTIES) = ({},{})
 os.chdir(cwd)

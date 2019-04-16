@@ -8,7 +8,7 @@ It also resizes fonts, then prints the resulting screen to <output_screen>"""
 
 import os, sys
 from optparse import OptionParser
-from edmObject import *
+from .edmObject import *
 
 def new_font_size(factor,font):
     # finds the closest size for a font
@@ -28,7 +28,7 @@ def Resize(screen,width,height):
     factor =  float(width)/float(old_width)
     screen.setDimensions(width,height,resize_objects=True)
     for ob in screen.flatten():
-        if ob.has_key("font"):
+        if "font" in ob:
             font = ob["font"]
             ob["font"] = new_font_size(factor,font)
     return screen
@@ -42,7 +42,7 @@ def cl_resize():
     screen.write(open(args[0],"r").read())
     Resize(screen,int(args[2]),int(args[3]))
     open(args[1],"w").write(screen.read())
-    print args[0]+ " has been resized. Output written to: "+args[1]
+    print(args[0]+ " has been resized. Output written to: "+args[1])
 
 if __name__ == "__main__":
     cl_resize()

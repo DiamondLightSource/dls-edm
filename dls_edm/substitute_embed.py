@@ -8,7 +8,7 @@ Substitutes all embedded windows for their contents in a screen, saving it as
 
 import os, sys, re
 from optparse import OptionParser
-from edmObject import *
+from .edmObject import *
 
 class Substitute_embed:
     """Object that substitutes all embedded windows in a screen for groups
@@ -32,7 +32,7 @@ class Substitute_embed:
         screen_w,screen_h = self.screen.getDimensions()
         for ob in outsiders:
             if ob.Type in ["Menu Mux","Menu Mux PV"] \
-               and not (ob.has_key("numItems") and ob["numItems"] and \
+               and not ("numItems" in ob and ob["numItems"] and \
                         int(ob["numItems"]) > 1):
                 # combine menu muxes and menu mux pvs if they have only 1 state
                 x,y = ob.getPosition()
@@ -48,11 +48,11 @@ class Substitute_embed:
         for t,l in [("Menu Mux",menu_muxes),("Menu Mux PV",menu_mux_pvs)]:
             mux = EdmObject(t)
             for ob in l:
-                symbols = [ o for o in ob.keys() if o.startswith("symbol") and \
+                symbols = [ o for o in list(ob.keys()) if o.startswith("symbol") and \
                             len(o)==len("symbol")+1 ]
                 symbol_max_num = int(max(symbols)[-1])
                 if symbol_max_num>3 or \
-                   mux.has_key("symbol"+str(3-symbol_max_num)):
+                   "symbol"+str(3-symbol_max_num) in mux:
                     screen.addObject(mux)
                     mux = EdmObject(t)
                 mux["numItems"]=1
@@ -63,17 +63,17 @@ class Substitute_embed:
                 mux.setDimensions(w,h)
                 for i in range(3):
                     key = "symbol"+str(i)
-                    if ob.has_key(key):
+                    if key in ob:
                         while True:
-                            if not mux.has_key(key):
+                            if key not in mux:
                                 mux[key] = { 0: ob["symbol"+str(i)]["0"] }
                                 for x in ["PV"+str(i),"value"+str(i)]:
-                                    if ob.has_key(x):
+                                    if x in ob:
                                         mux[x[:-1]+key[-1]]= { 0: ob[x]["0"] }
                                 break
                             else:
                                 key = key[:-1]+str(int(key[-1])+1)
-            if mux.has_key("symbol0"):
+            if "symbol0" in mux:
                 screen.addObject(mux)
                     
     def __substitute_recurse(self,root=None):
@@ -106,7 +106,7 @@ class Substitute_embed:
     def __group_from_screen(self,filename,macros):
         # create a group from a screen given by the filename
         filename = filename.strip('"').replace(".edl","")+".edl"
-        if self.in_screens.has_key(filename):
+        if filename in self.in_screens:
             screen = self.in_screens[filename].copy()
         else:
             paths = [ os.path.join(p,filename) for p in self.paths \
@@ -131,7 +131,7 @@ class Substitute_embed:
                 outsiders.append(ob)
         new_macros = self.additional_macros.copy()
         new_macros.update(macros)
-        for key in new_macros.keys():
+        for key in list(new_macros.keys()):
             for ob in [group]+outsiders:
                 ob.substitute("$("+key+")",new_macros[key])
         return (group,outsiders)
@@ -174,7 +174,7 @@ def cl_substitute_embed():
     screen.write(open(args[0],"r").read())
     Substitute_embed(screen,paths)
     open(args[1],"w").write(screen.read())
-    print "Embedded windows substituted in "+args[0]+", output written to "+args[1]
+    print("Embedded windows substituted in "+args[0]+", output written to "+args[1])
 
     
 if __name__ == "__main__":

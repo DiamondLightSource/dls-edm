@@ -8,11 +8,11 @@ sheet."""
 
 import sys, re, os
 from optparse import OptionParser
-from edmObject import *                                # edm screen object
-from edmTable import *                                # edm table object
-from titlebar import Titlebar
-from flip_horizontal import Flip_horizontal
-from common import label,text_monitor,dummy,rectangle,tooltip,rd,symbol
+from .edmObject import *                                # edm screen object
+from .edmTable import *                                # edm table object
+from .titlebar import Titlebar
+from .flip_horizontal import Flip_horizontal
+from .common import label,text_monitor,dummy,rectangle,tooltip,rd,symbol
 
 def pressure(x,y,w,h,pv,showUnits=False,fontAlign="left"):
     # make a pressure object
@@ -68,14 +68,14 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
     wall_obs = []
     for dict in row_dicts:
         # set PREFIX
-        if dict.has_key("PREFIX"):
+        if "PREFIX" in dict:
             PREFIX = dict["PREFIX"]
         else:
             PREFIX = ""
         # add VALVE
-        if dict.has_key("VALVE") or dict.has_key("WALL") or \
-           dict.has_key("SPACE"):
-            if dict.has_key("VALVE"):
+        if "VALVE" in dict or "WALL" in dict or \
+           "SPACE" in dict:
+            if "VALVE" in dict:
                 # add the valve, aperture or window symbol
                 VALVE=dict["VALVE"]
                 ob = EdmObject("Group")
@@ -94,17 +94,17 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
                     ob.addObject( symbol(0,0,16,32,"vacuumValve-symbol.edl",\
                                          VALVE+":STA",6) )
                 # a space symbol will be added later
-                if dict.has_key("SPACE"):
+                if "SPACE" in dict:
                     spaces.append((PREFIX,dict["SPACE"],ob))
                 else:
                     spaces.append(("","",ob))
             else:
                 # if no valve, put in a dummy placeholder
                 ob = dummy(0,0,16,32)
-                if dict.has_key("SPACE"):
+                if "SPACE" in dict:
                     spaces.append((PREFIX,dict["SPACE"],ob))
             # add in the left wall
-            if dict.has_key("WALL") and dict["WALL"].upper()=="LEFT":
+            if "WALL" in dict and dict["WALL"].upper()=="LEFT":
                 wall_obs.append(ob)
             table.addObject(ob,y=3)            
             table.nextCol()
@@ -112,7 +112,7 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
         line_cons[x]=[]
         has_things = False
         # add RGA
-        if dict.has_key("RGA"):
+        if "RGA" in dict:
             RGA = dict["RGA"]
             ob = EdmObject("Group")
             ob.addObject( tooltip(0,0,32,32,"Residual Gas Analyser: "+RGA) )
@@ -124,13 +124,13 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
             line_cons[x].append(ob)
         table.nextCell()
         # add GCTLR
-        if dict.has_key("GID"):
+        if "GID" in dict:
             GID=dict["GID"]
             if len(GID)<2:
                 GID = "0"+GID[0]
             GCTLR=dict["GCTLR"]
         # add PIRGs
-        if dict.has_key("PIRG"):
+        if "PIRG" in dict:
             PIRG = dict["PIRG"]
             ob = EdmObject("Group")
             ob.addObject( tooltip(0,0,32,32,"Pirani Gauge: "+PIRG) )
@@ -143,7 +143,7 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
             line_cons[x].append(ob)
         table.nextCell()        
         # add IMGs
-        if dict.has_key("IMG"):
+        if "IMG" in dict:
             IMG = dict["IMG"]
             ob = EdmObject("Group")
             ob.addObject( tooltip(0,0,32,32,"Inverted Magnetron Gauge: "+IMG) )
@@ -155,14 +155,14 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
             table.addObject(ob)
             line_cons[x].append(ob)
         table.nextCell()
-        if dict.has_key("GID") or dict.has_key("IONP") or dict.has_key("RGA"):
+        if "GID" in dict or "IONP" in dict or "RGA" in dict:
             has_things = True
             ob = dummy(0,0,32,32)
             table.addObject(ob)
             line_cons[x].append(ob)            
         table.nextCell()
         # add IONP
-        if dict.has_key("IONP"):
+        if "IONP" in dict:
             IONP = dict["IONP"]
             ob = EdmObject("Group")
             ob.addObject( tooltip(0,0,32,32,"Ion Pump: "+IONP) )
@@ -176,7 +176,7 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
             line_cons[x].append(ob)
         table.nextCell()
         # add WALL
-        if dict.has_key("WALL") and dict["WALL"].upper()=="RIGHT":
+        if "WALL" in dict and dict["WALL"].upper()=="RIGHT":
             ob = dummy(0,0,32,32)
             wall_obs.append(ob)
             table.nextCol()            
@@ -215,7 +215,7 @@ def Vacuum(row_dicts,title="BLxxI-VA",domain=None,flip_paths=None):
         screen.addObject(group)
         
     # create the lines
-    for x in line_cons.keys():
+    for x in list(line_cons.keys()):
         obs = line_cons[x]
         if obs:
             x = obs[0].getPosition()[0]+17

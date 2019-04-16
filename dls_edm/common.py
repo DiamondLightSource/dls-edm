@@ -1,6 +1,6 @@
 "Module containing some useful EdmObjects for building dls screens"
 
-from edmObject import *
+from .edmObject import *
 __all__=['arrow', 'dummy', 'embed', 'exit_button', 'label',\
          'raised_PV_button_circle', 'raised_PV_circle', \
          'raised_button_circle', 'raised_circle', 'raised_text_button_circle',\

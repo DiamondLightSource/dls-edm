@@ -6,10 +6,10 @@ given a table_dict """
 
 import sys, os
 from optparse import OptionParser
-from edmTable import *
-from edmObject import *
-from titlebar import Titlebar
-from common import label, rd, embed, tooltip, rd_visible, can_optimise, \
+from .edmTable import *
+from .edmObject import *
+from .titlebar import Titlebar
+from .common import label, rd, embed, tooltip, rd_visible, can_optimise, \
                    shell_visible
 
 def Summary(row_dicts,domain="$(dom)",vtype="temp",aspectratio=0.65):

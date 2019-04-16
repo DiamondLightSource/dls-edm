@@ -6,7 +6,7 @@ This script contains EdmTable, a virtual EdmObject that can expand and contract 
 """
 
 import os, re, sys, shutil
-from edmObject import *
+from .edmObject import *
 
 class EdmTable(EdmObject):
 
@@ -31,7 +31,7 @@ class EdmTable(EdmObject):
         """write(text) -> Error
         You cannot write text into an EdmTable, try creating an EdmObject and
         writing text into that instead"""
-        raise IOError, "This is an EdmTable, you cannot write text into it"
+        raise IOError("This is an EdmTable, you cannot write text into it")
 
     def read(self):
         """read() -> text
@@ -109,7 +109,7 @@ class EdmTable(EdmObject):
                 copy.replaceObject(ob,ob.exportGroup())
         copy.autofitDimensions()
         group = EdmObject("Group")
-        for key in copy.keys():
+        for key in list(copy.keys()):
             if "__EdmTable" in key:
                 group[key] = copy[key]
         for ob in copy.Objects:
@@ -135,20 +135,20 @@ class EdmTable(EdmObject):
                     dim_dict = max_width
                 else:
                     dim_dict = max_height
-                if dim_dict.has_key(axis):
+                if axis in dim_dict:
                     dim_dict[axis]=max(dim_dict[axis],val)
                 else:
                     dim_dict[axis]=val
         # calculate the max or each row and column
         if max_width:
             ws = [0]*( max( max_width.keys() )+1 )
-            for key in max_width.keys():
+            for key in list(max_width.keys()):
                 ws[key] = max_width[key]
         else:
             ws = [0]
         if max_height:
             hs = [0]*( max( max_height.keys())+1 )
-            for key in max_height.keys():
+            for key in list(max_height.keys()):
                 hs[key] = max_height[key]
         else:
             hs = [0]

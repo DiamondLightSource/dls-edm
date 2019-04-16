@@ -1,8 +1,8 @@
 import sys, re, os, math
 from optparse import OptionParser
-from edmObject import *                                # edm screen object
-from edmTable import *                                # edm table object
-from common import embed
+from .edmObject import *                                # edm screen object
+from .edmTable import *                                # edm table object
+from .common import embed
 
 # this tries to make a generic screen from a list of objects using the 
 # following algorithm:

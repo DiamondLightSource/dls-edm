@@ -7,8 +7,8 @@ Adds a titlebar and exit button to the screen"""
 
 import sys
 from optparse import OptionParser
-from edmObject import *
-from common import raised_PV_circle, raised_PV_button_circle, \
+from .edmObject import *
+from .common import raised_PV_circle, raised_PV_button_circle, \
      raised_PV_shell_circle, raised_text_circle, text_monitor, rd, exit_button
 
 def titlebar_group(width,string):
@@ -200,7 +200,7 @@ def cl_titlebar():
     Titlebar(screen,ta,left,left_text,header,header_text,tooltip,title)
     file = open(output,"w")
     file.write(screen.read())
-    print "Titlebar added to:",args[0],"screen written to:",output
+    print("Titlebar added to:",args[0],"screen written to:",output)
 
 if __name__=="__main__":
     cl_titlebar()
