@@ -57,17 +57,25 @@ class EdmObject:
         self.Objects = []
         self.Parent = None
         self.Type = "Invalid"
-        # make item look like a dict
-        self.__getitem__ = self.Properties.__getitem__
-        self.__setitem__ = self.Properties.__setitem__
-        self.__delitem__ = self.Properties.__delitem__
-        self.has_key     = self.Properties.has_key  
         self.keys        = self.Properties.keys
-        self.values      = self.Properties.values   
-        self.items       = self.Properties.items    
+        self.values      = self.Properties.values
+        self.items       = self.Properties.items
         # set the type
         self.setType(type, defaults = defaults)
-    
+
+    # make item look like a dict
+    def __setitem__(self, key, value):
+        return self.Properties.__setitem__(key, value)
+
+    def __getitem__(self, key):
+        return self.Properties.__getitem__(key)
+
+    def __delitem__(self, key):
+        return self.Properties.__delitem__(key)
+
+    def __contains__(self, key):
+        return self.Properties.__contains__(key)
+
     def setType(self,type,defaults = True):
         """setType(type) -> None
         Set the Type of self to be type, and attempt to populate self.Properties
