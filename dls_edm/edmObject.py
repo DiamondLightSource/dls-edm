@@ -57,9 +57,6 @@ class EdmObject:
         self.Objects = []
         self.Parent = None
         self.Type = "Invalid"
-        self.keys        = self.Properties.keys
-        self.values      = self.Properties.values
-        self.items       = self.Properties.items
         # set the type
         self.setType(type, defaults = defaults)
 
@@ -75,6 +72,15 @@ class EdmObject:
 
     def __contains__(self, key):
         return self.Properties.__contains__(key)
+
+    def items(self):
+        return self.Properties.items()
+
+    def keys(self):
+        return self.Properties.keys()
+
+    def values(self):
+        return self.Properties.values()
 
     def setType(self,type,defaults = True):
         """setType(type) -> None
@@ -102,7 +108,7 @@ class EdmObject:
         copy does not have a Parent defined."""
         new_ob = EdmObject(self.Type,defaults=False)
         # need to explicitly copy some properties
-        for k,v in list(self.items()):
+        for k,v in self.items():
             if v.__class__=={}.__class__:
                 new_ob[k]=v.copy()
             elif v.__class__==[].__class__:
