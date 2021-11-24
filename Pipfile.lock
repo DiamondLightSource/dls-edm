@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "7e7ef69da7248742e869378f8421880cf8f0017f96d94d086813baa518a65489"
+            "sha256": "3a3f885430631097b0a4a1a7d247895199d570861b324e70aeb74dc5ec2baae5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -15,6 +15,16 @@
             }
         ]
     },
-    "default": {},
-    "develop": {}
+    "default": {
+        "dls-edm": {
+            "editable": true,
+            "path": "."
+        }
+    },
+    "develop": {
+        "dls-edm": {
+            "editable": true,
+            "path": "."
+        }
+    }
 }
