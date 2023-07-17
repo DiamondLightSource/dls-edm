@@ -1,6 +1,6 @@
 """Module containing some useful EdmObjects for building dls screens."""
 
-from typing import Collection, List, Optional, Tuple
+from typing import Collection, Optional, Tuple
 
 from .edmObject import EdmObject, quoteListString, quoteString
 
@@ -29,14 +29,14 @@ __all__ = [
 __all__.sort()
 
 
-def can_optimise(x: List[str]) -> bool:
+def can_optimise(x: str) -> bool:
     """Check if item can be optimised.
 
     Return True if the item can be optimised (i.e. if it is an autogen screen
     or one of the selected optimisable screens
 
     Args:
-        x (List[str]): List of objects of item to be optimised
+        x (str): List of objects of item to be optimised
 
     Returns:
         bool: True if the item can be optimised
