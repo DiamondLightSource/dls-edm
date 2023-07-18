@@ -20,12 +20,12 @@ def Flip_horizontal(
     """Flip the screen object, and return it with changes applied.
 
     Paths gives the list of paths to look for flipped symbols or pngs.
-    If flip_group_contacts: flip the contents of groups, otherwise keep
+    If flip_group_contents: flip the contents of groups, otherwise keep
     them intact when flipping.
 
     Args:
         screen (EdmObject): The screen object
-        paths (List[str]): the list of paths to look for flipped symbols or pngs
+        paths (List[str]): The list of paths to look for flipped symbols or pngs
         flip_group_contents (bool, optional): Flag to determine whether to flip
         the contents of groups. Defaults to False.
 
