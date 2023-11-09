@@ -183,10 +183,11 @@ class EdmObject:
         lines: List[str]
 
         if [].__class__ == text.__class__:
-            assert type(text) == List[str]
+            # make sure all elements are of type str
+            assert all(isinstance(x, str) for x in text)
             lines = text
         else:
-            assert type(text) == str
+            assert isinstance(text, str)
             # if we are being passed text, we must be the top level object
             lines = text.strip().splitlines()
             # we must now clear all our properties to avoid junk tags
@@ -247,7 +248,6 @@ class EdmObject:
         # multiline_dict: Dict[str, Union[str, bool, int]] = {}
 
         # First line of object should always include type
-        assert obj_lines[0].startswith("# (")
         object_dict["Type"] = self._get_edl_object_type(obj_lines[0])
 
         expect = None
@@ -581,8 +581,9 @@ class EdmObject:
             self.setDimensions(maxx - minx, maxy - miny, resize_objects=False)
             self.setPosition(minx, miny, move_objects=False)
         elif self.Type == "Lines" and "xPoints" in self and self["xPoints"]:
-            # Assume self is a dict due to __getitem__ and __setitem__ overloading
-            assert isinstance(self, Dict)
+            # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
+            assert isinstance(self, EdmObject)
+
             xpts = [int(self["xPoints"][x]) for x in list(self["xPoints"].keys())]
             ypts = [int(self["yPoints"][y]) for y in list(self["yPoints"].keys())]
             self["x"], self["y"] = min(xpts), min(ypts)
@@ -590,8 +591,8 @@ class EdmObject:
 
     def getDimensions(self) -> Tuple[int, int]:
         """Return a tuple of the width and height of self as integers."""
-        # Assume self is a dict due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, Dict)
+        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
+        assert isinstance(self, EdmObject)
         return self["w"], self["h"]
 
     def setDimensions(
@@ -611,8 +612,8 @@ class EdmObject:
             resize_objects (bool, optional): Flag to determine if children object need
                 resizing proprotionally. Defaults to True.
         """
-        # Assume self is a dict due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, Dict)
+        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
+        assert isinstance(self, EdmObject)
 
         if factors:
             neww = int(w * int(self["w"]))
@@ -670,8 +671,8 @@ class EdmObject:
         Returns:
             Tuple[int, int]: A tuple of the X and Y positions
         """
-        # Assume self is a dict due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, Dict)
+        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
+        assert isinstance(self, EdmObject)
         return self["x"], self["y"]
 
     def toint(self, s):
@@ -695,8 +696,8 @@ class EdmObject:
             move_objects (bool, optional): Flag to determine if children should be
                 moved proporionally. Defaults to True.
         """
-        # Assume self is a dict due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, Dict)
+        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
+        assert isinstance(self, EdmObject)
         if relative:
             newx = x + self["x"]
             newy = y + self["y"]

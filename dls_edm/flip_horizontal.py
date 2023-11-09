@@ -67,7 +67,6 @@ def Flip_horizontal(
                         filename += ".edl"
                     if filename in files:
                         ob2["file"] = quoteString(filename.replace(".edl", ""))
-            assert isinstance(symbols[0]["file"], str)
             if (
                 flip_group_contents
                 or not symbols
