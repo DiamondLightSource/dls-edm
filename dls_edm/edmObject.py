@@ -300,7 +300,7 @@ class EdmObject:
     def _write_edl_multiline(
         self, line: str, value: Union[List, Dict]
     ) -> Union[Dict[str, Union[str, int]], List[Union[str, int]]]:
-        list = []
+        list_ = []
         in_quotes = False
 
         # replace quotes with a tag, then split the line
@@ -308,22 +308,22 @@ class EdmObject:
 
         for t in temp_list:
             if not in_quotes:
-                list.extend(t.strip().split())
+                list_.extend(t.strip().split())
             else:
-                list.append('"' + t.replace("*&q", '\\"') + '"')
+                list_.append('"' + t.replace("*&q", '\\"') + '"')
             in_quotes = not in_quotes
         # use a list to represent a list of lines
-        if len(list) == 1:
+        if len(list_) == 1:
             if not value:
                 value = []
             assert isinstance(value, List), "Expected '  x', got " + line
-            value.append(list[0])
+            value.append(list_[0])
         # use a dict to represent key,val pairs
         else:
             if not value:
                 value = {}
             assert isinstance(value, Dict), "Expected '  x x', got " + line
-            value[list[0]] = " ".join(list[1:])
+            value[list_[0]] = " ".join(list_[1:])
         return value
 
     # def _write_new_edm_object(
