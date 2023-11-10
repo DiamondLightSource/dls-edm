@@ -8,6 +8,7 @@ Updated to Python3 by: Oliver Copping
 import os
 import pickle
 import sys
+from pathlib import Path
 from typing import Dict, ItemsView, KeysView, List, Optional, Tuple, Union, ValuesView
 
 ignore_list = [
@@ -826,14 +827,16 @@ def write_helper() -> None:
     used to provide some sensible options for a default object.
     """
     print("Building helper object...")
-    cwd = os.getcwd()
+    cwd = Path.cwd()
     build_dir = os.path.abspath(os.path.dirname(__file__))
     # load the environment so we can find the epics location
-    epics_dir = os.path.join(os.environ["EPICS_BASE"], "..")
-    edm_dir = os.path.join(epics_dir, "extensions", "src", "edm")
+    edm_path = Path("/dls_sw/prod/tools/RHEL7-x86_64/defaults/bin/edm")
+    while edm_path.is_symlink():
+        edm_path = edm_path.readlink()
+    edm_dir = Path.joinpath(edm_path.parent, "..", "..", "src", "edm")
     # create the COLOUR dictionary
     COLOUR = {"White": "index 0"}
-    file = open(os.path.join(edm_dir, "setup", "colors.list"), "r")
+    file = open(Path.joinpath(edm_dir, "setup", "colors.list"), "r")
     lines = file.readlines()
     file.close()
     for line in lines:
@@ -843,40 +846,36 @@ def write_helper() -> None:
             name = line[
                 line.find('"') : line.find('"', line.find('"') + 1) + 1
             ].replace('"', "")
-            COLOUR[name] = "index " + index
+            COLOUR[name] = f"index {index}"
         elif line.startswith("rule"):
             index = line.split()[1]
             name = line.split()[2]
-            COLOUR[name] = "index " + index
-    cwd = os.getcwd()
-    build_dir = os.path.abspath(os.path.dirname(__file__))
+            COLOUR[name] = f"index {index}"
+    print(COLOUR)
+    cwd = Path.cwd()
+    build_dir = Path.absolute(Path(__file__).parent)
     os.chdir(edm_dir)
     # build up a list of include dirs to pass to g++
     dirs = [
-        "-I" + os.path.join(edm_dir, x) for x in os.listdir(".") if os.path.isdir(x)
+        f"-I {Path.joinpath(edm_dir, x)}" for x in Path(".").iterdir() if Path.is_dir(x)
     ]
     dirs += [
-        "-I" + os.path.join(edm_dir, "util", x)
+        f"-I {Path.joinpath(edm_dir, 'util', x)}"
         for x in ["sys/os/Linux", "avl", "thread/os/Linux"]
     ]
-    dirs += ["-I" + os.path.join(epics_dir, "base", "include")]
-    lib_path = os.path.join(epics_dir, "extensions", "lib", "linux-x86")
-    dirs += ["-L" + lib_path]
+    epics_base_dir = Path(os.environ["EPICS_BASE"])
+    dirs += [f"-I {Path.joinpath(epics_base_dir, 'include')}"]
+    lib_path = Path.joinpath(epics_base_dir, "lib", "linux-x86")
+    dirs += [f"-L {lib_path}"]
     os.chdir(build_dir)
     # build act_save.so, the program for creating a file of all edm objects
-    line = (
-        "g++ -fPIC "
-        + " ".join(dirs)
-        + " -shared act_save.cc -o act_save.so -Wl,-rpath="
-        + lib_path
-        + " -L"
-        + lib_path
-        + " -lEdmBase"
-    )
+    line = f"g++ -fPIC {' '.join(dirs)} \
+        -shared act_save.cc -o act_save.so -Wl,-rpath={lib_path} -L {lib_path} -L {edm_dir}"
     print(line)
     os.system(line)
     # run it
     os.system("env LD_PRELOAD=./act_save.so edm -crawl dummy.edl")
+    print(Path.cwd())
     file = open("allwidgets.edl", "r")
     # get rid of the junk output by one widget
     screen_text = file.read().replace(
