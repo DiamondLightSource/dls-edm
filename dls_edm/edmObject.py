@@ -62,12 +62,12 @@ class EdmObject:
     o["fillColor"] = o.Colour["White"]
     """
 
-    def __init__(self, type: str = "Invalid", defaults: bool = True) -> None:
+    def __init__(self, obj_type: str = "Invalid", defaults: bool = True) -> None:
         """
         Edm Object constructor.
 
         Args:
-            type (str, optional): Type of self, like 'Group', 'Screen' or
+            obj_type (str, optional): Type of self, like 'Group', 'Screen' or
                 'Embedded Window'. Defaults to "Invalid".
             defaults (bool, optional): Flag to use default values for Type.
                 Defaults to True.
@@ -79,7 +79,7 @@ class EdmObject:
         self.Colour: Dict[str, str] = {}
         self.Parent: Optional[EdmObject] = None
         # set the type
-        self.setType(type, defaults=defaults)
+        self.setType(obj_type, defaults=defaults)
 
     # make item look like a dict
     def __setitem__(self, key: str, value: Union[str, int, List[str], Dict]) -> None:
@@ -107,24 +107,24 @@ class EdmObject:
         # assert self.Properties.values().__class__ == {}.values().__class__
         return self.Properties.values()
 
-    def setType(self, type: str, defaults: bool = True) -> None:
+    def setType(self, obj_type: str, defaults: bool = True) -> None:
         """
         Set EdmObject Type.
 
-        Set the Type of self to be type, and attempt to populate self.Properties
+        Set the Type of self to be obj_type, and attempt to populate self.Properties
         with default values and self.Colours with the index lookup table
 
         Args:
-            type (str): Type of self, like 'Group', 'Screen' or
+            obj_type (str): Type of self, like 'Group', 'Screen' or
                 'Embedded Window'. Defaults to "Invalid".
             defaults (bool, optional): Flag to use default values for Type.
                 Defaults to True.
         """
-        self.Type = type
+        self.Type = obj_type
         if PROPERTIES:
             self.Colour = COLOUR
             try:
-                default_dict = PROPERTIES[type]
+                default_dict = PROPERTIES[obj_type]
                 if defaults:
                     self.Properties.update(default_dict)
                 return
@@ -132,8 +132,8 @@ class EdmObject:
                 print(
                     f"Exception caught when attempting to set default properties:\n {e}"
                 )
-        if type != "Screen":
-            self["object"] = "active" + type.replace(" ", "") + "Class"
+        if obj_type != "Screen":
+            self["object"] = "active" + obj_type.replace(" ", "") + "Class"
         # If PROPERTIES isn't defined, set some sensible values
         self["major"], self["minor"], self["release"] = (4, 0, 0)
         self["x"], self["y"], self["w"], self["h"] = (0, 0, 100, 100)
