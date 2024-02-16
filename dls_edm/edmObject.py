@@ -5,6 +5,7 @@ Author: Tom Cobb
 Updated to Python3 by: Oliver Copping
 """
 
+import codecs
 import os
 import pickle
 import sys
@@ -19,6 +20,25 @@ ignore_list = [
     "beginGroup",
     "endGroup",
 ]
+
+
+def get_dicts() -> (
+    Tuple[Dict[str, str], Dict[str, Union[str, bool, int, List[str], Dict]]]
+):
+    COLOUR: Dict[str, str] = {}
+    PROPERTIES: Dict[str, Union[str, bool, int, List[str], Dict]] = {}
+    # code to load the stored dictionaries
+    try:
+        file_path = Path.absolute(Path(__file__).parent)  # + "/helper.pkl")
+        file_path = file_path.joinpath("helper.pkl")
+        file = file_path.open("rb")
+        pkl = pickle.load(file)
+        (COLOUR, PROPERTIES) = pkl
+    except IOError as e:
+        print(f"IOError: \n{e}")
+        (COLOUR, PROPERTIES) = ({}, {})
+
+    return COLOUR, PROPERTIES
 
 
 class EdmObject:
@@ -79,7 +99,9 @@ class EdmObject:
         self.Colour: Dict[str, str] = {}
         self.Parent: Optional[EdmObject] = None
         # set the type
-        self.setType(obj_type, defaults=defaults)
+        self.setType(obj_type)
+
+        self.setProperties(defaults=defaults)
 
     # make item look like a dict
     def __setitem__(self, key: str, value: Union[str, int, List[str], Dict]) -> None:
@@ -107,36 +129,47 @@ class EdmObject:
         # assert self.Properties.values().__class__ == {}.values().__class__
         return self.Properties.values()
 
-    def setType(self, obj_type: str, defaults: bool = True) -> None:
+    def setType(self, obj_type: str) -> None:
         """
         Set EdmObject Type.
 
-        Set the Type of self to be obj_type, and attempt to populate self.Properties
-        with default values and self.Colours with the index lookup table
+        Set the Type of self to be obj_type.
 
         Args:
             obj_type (str): Type of self, like 'Group', 'Screen' or
                 'Embedded Window'. Defaults to "Invalid".
-            defaults (bool, optional): Flag to use default values for Type.
-                Defaults to True.
         """
         self.Type = obj_type
-        if PROPERTIES:
-            self.Colour = COLOUR
-            try:
-                default_dict = PROPERTIES[obj_type]
-                if defaults:
-                    self.Properties.update(default_dict)
-                return
-            except Exception as e:
-                print(
-                    f"Exception caught when attempting to set default properties:\n {e}"
-                )
+
         if obj_type != "Screen":
             self["object"] = "active" + obj_type.replace(" ", "") + "Class"
         # If PROPERTIES isn't defined, set some sensible values
         self["major"], self["minor"], self["release"] = (4, 0, 0)
         self["x"], self["y"], self["w"], self["h"] = (0, 0, 100, 100)
+
+    def setProperties(self, defaults: bool = True):
+        """
+        Set EdmObject Properties.
+
+        Attempt to populate self.Properties with default values and
+        self.Colours with the index lookup table.
+
+        Args:
+            defaults (bool, optional): Flag to use default values for Type.
+                Defaults to True.
+        """
+        COLOUR, PROPERTIES = get_dicts()
+
+        if PROPERTIES:
+            self.Colour = COLOUR
+            try:
+                default_dict = PROPERTIES[self.Type]
+                if defaults:
+                    self.Properties.update(default_dict)
+            except Exception as e:
+                print(
+                    f"Exception caught when attempting to set default properties:\n {e}"
+                )
 
     def copy(self) -> "EdmObject":
         """
@@ -826,19 +859,23 @@ def write_helper() -> None:
     EdmObject in imported again, these dictionaries are read and imported, and
     used to provide some sensible options for a default object.
     """
+    get_dicts()
     print("Building helper object...")
-    cwd = Path.cwd()
-    build_dir = os.path.abspath(os.path.dirname(__file__))
+
+    build_dir = Path.absolute(Path(__file__).parent)
+
     # load the environment so we can find the epics location
     edm_path = Path("/dls_sw/prod/tools/RHEL7-x86_64/defaults/bin/edm")
     while edm_path.is_symlink():
         edm_path = edm_path.readlink()
     edm_dir = Path.joinpath(edm_path.parent, "..", "..", "src", "edm")
+
     # create the COLOUR dictionary
     COLOUR = {"White": "index 0"}
-    file = open(Path.joinpath(edm_dir, "setup", "colors.list"), "r")
-    lines = file.readlines()
-    file.close()
+
+    with open(Path.joinpath(edm_dir, "setup", "colors.list"), "r") as file:
+        lines = file.readlines()
+
     for line in lines:
         # read each line in colors.list into the dict
         if line.startswith("static"):
@@ -851,13 +888,12 @@ def write_helper() -> None:
             index = line.split()[1]
             name = line.split()[2]
             COLOUR[name] = f"index {index}"
-    print(COLOUR)
-    cwd = Path.cwd()
-    build_dir = Path.absolute(Path(__file__).parent)
-    os.chdir(edm_dir)
+
     # build up a list of include dirs to pass to g++
     dirs = [
-        f"-I {Path.joinpath(edm_dir, x)}" for x in Path(".").iterdir() if Path.is_dir(x)
+        f"-I {Path.joinpath(edm_dir, x)}"
+        for x in Path(edm_dir).iterdir()
+        if Path.is_dir(x)
     ]
     dirs += [
         f"-I {Path.joinpath(edm_dir, 'util', x)}"
@@ -867,26 +903,29 @@ def write_helper() -> None:
     dirs += [f"-I {Path.joinpath(epics_base_dir, 'include')}"]
     lib_path = Path.joinpath(epics_base_dir, "lib", "linux-x86")
     dirs += [f"-L {lib_path}"]
-    os.chdir(build_dir)
+
     # build act_save.so, the program for creating a file of all edm objects
     line = f"g++ -fPIC {' '.join(dirs)} \
         -shared act_save.cc -o act_save.so -Wl,-rpath={lib_path} -L {lib_path} -L {edm_dir}"
-    print(line)
+
     os.system(line)
     # run it
     os.system("env LD_PRELOAD=./act_save.so edm -crawl dummy.edl")
-    print(Path.cwd())
-    file = open("allwidgets.edl", "r")
+
     # get rid of the junk output by one widget
-    screen_text = file.read().replace(
+    # For some reason if the codec isn't 'latin-1' this line fails most of the time???
+    screen_text = codecs.open("allwidgets.edl", "r", encoding="latin-1").read()
+    print("-- screen_text read --")
+    screen_text = screen_text.replace(
         "# Additional properties\nbeginObjectProperties\nendObjectProperties", ""
     )
-    file.close()
-    os.chdir(cwd)
+
     # the output of the program isn't a proper screen, so make it so
     all_obs = EdmObject("Screen")
     # fix some code, then add a header
     all_obs.write(all_obs.read() + "\n" + screen_text)
+
+    print("-- Setting up screen properties --")
 
     screen_properties: Dict[str, Union[str, bool, int, List[str], Dict]] = {}
     # write the default screen properties
@@ -933,24 +972,12 @@ def write_helper() -> None:
             elif "TYP" in key.upper():
                 del ob[key]
         PROPERTIES[ob.Type] = ob.Properties.copy()
-    os.chdir(build_dir)
-    output = open("helper.pkl", "wb")
-    pickle.dump((COLOUR, PROPERTIES), output, -1)
-    output.close()
-    os.chdir(cwd)
+    pkl_file = build_dir.joinpath(Path("helper.pkl"))
+    pkl_file.touch()
+    with pkl_file.open("wb") as f:
+        pickle.dump((COLOUR, PROPERTIES), f, 0)
     print("Done")
 
-
-# code to load the stored dictionaries
-cwd = os.getcwd()
-try:
-    build_dir = os.path.abspath(os.path.dirname(__file__))
-    os.chdir(build_dir)
-    file = open("helper.pkl", "rb")
-    (COLOUR, PROPERTIES) = pickle.load(file)
-except IOError:
-    (COLOUR, PROPERTIES) = ({}, {})
-os.chdir(cwd)
 
 if __name__ == "__main__":
     write_helper()

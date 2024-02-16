@@ -4,11 +4,12 @@ This script takes an edm screen and flips it horizontally, keeping groups intact
 It also replaces symbols and images with their flipped counterparts if they exist.
 """
 import os
+import warnings
 from optparse import OptionParser
 from typing import Dict, List
 
-from .common import flip_axis
-from .edmObject import EdmObject, quoteString
+from dls_edm.common import flip_axis
+from dls_edm.edmObject import EdmObject, get_dicts, quoteString
 
 author = "Tom Cobb"
 usage = """%prog [options] <input_screen> <output_screen>"""
@@ -32,6 +33,9 @@ def Flip_horizontal(
     Returns:
         EdmObject: The updated screen object
     """
+
+    COLOUR, PROPERTIES = get_dicts()
+
     screenw, screenh = screen.getDimensions()
     files = []
     for p in paths:
@@ -80,9 +84,11 @@ def Flip_horizontal(
                     ob2.setPosition(x + w - (ob2x - x + ob2w), ob2y)
                     if (not symbols or flip_group_contents) and ob2.Type == "Lines":
                         flip_lines(ob2)
-        elif ob.Type == "Lines" and ob["lineColor"] == ob.Colour["Controller"]:
-            # flip lines in symbols
-            flip_lines(ob)
+
+        elif ob.Type == "Lines":
+            if ob["lineColor"] == ob.Colour["Controller"]:
+                # flip lines in symbols
+                flip_lines(ob)
         elif ob.Type == "PNG Image" or ob.Type == "Image":
             # replace images with their flipped version if applicable
             assert isinstance(ob["file"], str)
