@@ -61,7 +61,7 @@ class EdmTable(EdmObject):
         """
         # Store the entered args into a disctionary
         _args: Dict = locals()
-        EdmObject.__init__(self, type="EdmTable")
+        super().__init__(obj_type="EdmTable")
 
         # Loop over every argument
         for attr, val in _args.items():
