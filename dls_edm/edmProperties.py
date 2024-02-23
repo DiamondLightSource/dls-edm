@@ -1,0 +1,100 @@
+"""
+A python representation of an edm object with associated useful functions.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
+
+from typing import Dict, ItemsView, KeysView, List, ValuesView
+
+from utils import get_colour_dict, get_properties_dict
+
+
+class EdmProperties:
+    """
+    A python object storing the properties of an EdmObject.
+    """
+
+    def __init__(self, obj_type: str | None = None, defaults: bool = True) -> None:
+        """
+        Edm Object properties constructor.
+
+        Args:
+            defaults (bool, optional): Flag to use default values for Type.
+                Defaults to True.
+        """
+        # initialise variables
+        self.Type = obj_type
+        self.Colour: Dict[str, str] = get_colour_dict()
+        self._properties: Dict[str, str | bool | int | List[str] | Dict] = {}
+        if defaults:
+            self.setProperties()  # use_defaults=self.use_defaults)
+
+    def setProperties(self) -> None:  # , use_defaults: bool = True):
+        """
+        Set EdmObject Properties.
+
+        Attempt to populate self.Properties with default values and
+        self.Colours with the index lookup table.
+
+        Args:
+            defaults (bool, optional): Flag to use default values for Type.
+                Defaults to True.
+        """
+        default_dict: Dict[str, str | bool | int | List[str] | Dict]
+
+        PROPERTIES = get_properties_dict()
+
+        if PROPERTIES:
+            try:
+                # if use_defaults:
+                assert self.Type is not None
+                default_dict = PROPERTIES[self.Type]  # type: ignore
+                self._properties.update(default_dict)
+                # for key, value in default_dict.items():
+                #     setattr(self._properties, key, value)
+            # else:
+            #     self._properties = {}
+            except Exception as e:
+                print(
+                    f"Exception caught when attempting to set default properties:\n {e}"
+                )
+
+    # def getProperty(self, property_key: str) -> str | bool | int | List[str] | Dict:
+    def __getitem__(self, property_key: str) -> str | bool | int | List[str] | Dict:
+        return self._properties[property_key]
+
+    # def setProperty(
+    #     self, property_key: str, value: str | bool | int | List[str] | Dict
+    # ) -> None:
+    def __setitem__(
+        self, property_key: str, value: str | bool | int | List[str] | Dict
+    ) -> None:
+        self._properties[property_key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self._properties[key]
+
+    def __contains__(self, key: str) -> bool:
+        return True if key in self._properties else False
+
+    def __repr__(self) -> str:
+        """Make "print self" produce a useful output."""
+        output = str(self._properties)
+        return output
+
+    def items(
+        self,
+    ) -> ItemsView[str, str | bool | int | List[str] | Dict]:
+        return self._properties.items()
+
+    def keys(self) -> KeysView[str]:
+        # assert self.Properties.keys().__class__ == {}.keys().__class__
+        return self._properties.keys()
+
+    def values(self) -> ValuesView[str | bool | int | List[str] | Dict]:
+        # assert self.Properties.values().__class__ == {}.values().__class__
+        return self._properties.values()
+
+    def clear_properties(self) -> None:
+        self._properties = {}

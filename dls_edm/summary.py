@@ -1,12 +1,10 @@
 """Generates an edm summary screen for temps, waterflows & motors given a table_dict."""
 from typing import Dict, List
 
-from .common import can_optimise, embed, label, rd, rd_visible, shell_visible, tooltip
-from .edmObject import EdmObject, quoteString
-from .edmTable import EdmTable
-from .titlebar import Titlebar
-
-usage = """usage: ./%prog [options] <xls_file> <output_file>"""
+from common import can_optimise, embed, label, rd, rd_visible, shell_visible, tooltip
+from edmObject import EdmObject, quoteString
+from edmTable import EdmTable
+from titlebar import Titlebar
 
 
 def Summary(
@@ -113,7 +111,7 @@ def Summary(
                 )
                 table.addObject(tooltip(0, 0, xs, 20, dict["DESCRIPTION"]), xoff=xoff)
                 lab = label(0, 0, xs, 20, dict["NAME"], "center")
-                lab["font"] = quoteString("arial-bold-r-14.0")
+                lab.Properties["font"] = quoteString("arial-bold-r-14.0")
                 table.addObject(lab, xoff=xoff)
                 table.nextCell()
                 # write the cells
@@ -205,12 +203,12 @@ def Summary(
             else:
                 txt = "BMS"
             ob = rd_visible(0, 0, 90, 20, txt, "DLS_dev%s.edl" % id)
-            ob["fgColor"] = ob.Colour["Related display"]
+            ob.Properties["fgColor"] = ob.Properties.Colour["Related display"]
             table.addObject(ob)
             table.nextCell()
     else:
         interlock = rd_visible(0, 0, 90, 20, "Interlocks", domain + "-interlocks")
-        interlock["fgColor"] = interlock.Colour["Related display"]
+        interlock.Properties["fgColor"] = interlock.Properties.Colour["Related display"]
         table.addObject(interlock)
     screen.autofitDimensions()
     table.ungroup()

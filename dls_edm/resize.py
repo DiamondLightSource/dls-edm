@@ -3,10 +3,12 @@
 It also resizes fonts, then prints the resulting screen to <output_screen>
 """
 
+import argparse
 from optparse import OptionParser
+from pathlib import Path
 from typing import List
 
-from .edmObject import EdmObject
+from edmObject import EdmObject
 
 author = "Tom Cobb"
 usage = """%prog [options] <input_screen> <output_screen> <width> <height>"""
@@ -71,24 +73,32 @@ def Resize(screen: EdmObject, width: int, height: int) -> EdmObject:
     factor = float(width) / float(old_width)
     screen.setDimensions(width, height, resize_objects=True)
     for ob in screen.flatten():
-        if "font" in ob:
-            font = ob["font"]
+        if "font" in ob.Properties:
+            font = ob.Properties["font"]
             assert isinstance(font, str)
-            ob["font"] = new_font_size(factor, font)
+            ob.Properties["font"] = new_font_size(factor, font)
     return screen
 
 
 def cl_resize():
     """Command line helper function to rezise a screen."""
-    parser = OptionParser(usage)
-    (options, args) = parser.parse_args()
-    if len(args) != 4:
-        parser.error("Incorrect number of arguments")
+    parser = argparse.ArgumentParser(prog="resize")
+    parser.add_argument("screen", nargs=1, type=Path)
+    parser.add_argument("resized_screen", nargs=1, type=Path)
+    parser.add_argument("width", nargs=1, type=int)
+    parser.add_argument("height", nargs=1, type=int)
+    args = parser.parse_args()
+
     screen = EdmObject("Screen")
-    screen.write(open(args[0], "r").read())
-    Resize(screen, int(args[2]), int(args[3]))
-    open(args[1], "w").write(screen.read())
-    print(args[0] + " has been resized. Output written to: " + args[1])
+    with open(args.screen[0], "r") as f:
+        screen.write(f.read())
+
+    Resize(screen, int(args.width[0]), int(args.height[0]))
+    with open(args.resized_screen[0], "w") as f:
+        f.write(screen.read())
+    print(
+        f"{args.screen[0]} has been resized. Output written to: {args.resized_screen[0]}"
+    )
 
 
 if __name__ == "__main__":

@@ -13,8 +13,8 @@ following algorithm:
 import math
 from typing import Dict, List, Optional, Tuple
 
-from .edmObject import EdmObject  # edm screen object
-from .edmTable import EdmTable  # edm table object
+from edmObject import EdmObject  # edm screen object
+from edmTable import EdmTable  # edm table object
 
 
 # Return xborder, yborder for level of tiler
@@ -185,6 +185,6 @@ def Generic(
         x, y = g(auto_x_y_string) % w, f(auto_x_y_string) % h
         screen.setPosition(x, y)
     for ob in screen.flatten():
-        if ob.Type == "EdmTable":
+        if ob.Properties.Type == "EdmTable":
             ob.ungroup()
     return screen

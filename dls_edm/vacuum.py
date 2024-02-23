@@ -8,8 +8,7 @@ from .edmTable import EdmTable
 from .flip_horizontal import Flip_horizontal
 from .titlebar import Titlebar
 
-author = "Tom Cobb"
-usage = """%prog [options] <xls_file>"""
+author = "Oliver Copping"
 
 
 def pressure(
@@ -37,8 +36,8 @@ def pressure(
         EdmObject: Pressure EdmObject class
     """
     ob = text_monitor(x, y, w, h, pv, showUnits, fontAlign)
-    ob["format"] = quoteString("exponential")
-    ob["objType"] = quoteString("monitors")
+    ob.Properties["format"] = quoteString("exponential")
+    ob.Properties["objType"] = quoteString("monitors")
     return ob
 
 
@@ -60,11 +59,11 @@ def gaugeRd(
         EdmObject: _description_
     """
     ob = rd(x, y, w, h, "mks937aGauge.edl", f"dom=$(dom), id={GID}")
-    assert isinstance(ob["displayFileName"], Dict)
-    ob["displayFileName"][1] = quoteString("mks937a.edl")
-    assert isinstance(ob["symbols"], Dict)
-    ob["symbols"][1] = quoteString(f"device={PREFIX}{GCTLR}")
-    ob["numDsps"] = 2
+    assert isinstance(ob.Properties["displayFileName"], Dict)
+    ob.Properties["displayFileName"][1] = quoteString("mks937a.edl")
+    assert isinstance(ob.Properties["symbols"], Dict)
+    ob.Properties["symbols"][1] = quoteString(f"device={PREFIX}{GCTLR}")
+    ob.Properties["numDsps"] = 2
     return ob
 
 
@@ -176,7 +175,7 @@ def Vacuum(
                 wall_obs.append(ob)
             table.addObject(ob, y=3)
             table.nextCol()
-        x = table["__def_x"]
+        x = table.Properties["__def_x"]
         line_cons[x] = []
         has_things = False
         # add RGA
@@ -287,16 +286,16 @@ def Vacuum(
         top = EdmObject("Rectangle")
         top.setPosition(int(x + w / 2 - 5), y - 143)
         top.setDimensions(10, 138)
-        top["fill"] = True
-        top["fillColor"] = top.Colour["grey-13"]
-        top["lineColor"] = top.Colour["Black"]
+        top.Properties["fill"] = True
+        top.Properties["fillColor"] = top.Properties.Colour["grey-13"]
+        top.Properties["lineColor"] = top.Properties.Colour["Black"]
         group.addObject(top)
         bottom = EdmObject("Rectangle")
         bottom.setPosition(int(x + w / 2 - 5), y + h + 5)
         bottom.setDimensions(10, 64)
-        bottom["fill"] = True
-        bottom["fillColor"] = bottom.Colour["grey-13"]
-        bottom["lineColor"] = bottom.Colour["Black"]
+        bottom.Properties["fill"] = True
+        bottom.Properties["fillColor"] = bottom.Properties.Colour["grey-13"]
+        bottom.Properties["lineColor"] = bottom.Properties.Colour["Black"]
         group.addObject(bottom)
         group.autofitDimensions()
         screen.addObject(group)
@@ -312,10 +311,10 @@ def Vacuum(
             assert isinstance(x, (int, float))
             line.setPosition(int(x), miny, move_objects=False)
             line.setDimensions(0, maxy - miny, resize_objects=False)
-            line["lineColor"] = line.Colour["Black"]
-            line["lineWidth"] = 2
-            line["xPoints"] = {0: x, 1: x}
-            line["yPoints"] = {0: miny, 1: maxy}
+            line.Properties["lineColor"] = line.Properties.Colour["Black"]
+            line.Properties["lineWidth"] = 2
+            line.Properties["xPoints"] = {0: x, 1: x}
+            line.Properties["yPoints"] = {0: miny, 1: maxy}
             screen.addObject(line)
             line.lowerObject()
 
@@ -387,7 +386,7 @@ def Vacuum(
         hutchText = "Branchline Enclosure " + title[title.find("BE") + 2].replace(
             ".", "-"
         )
-    screen["title"] = quoteString(title.split(".")[0])
+    screen.Properties["title"] = quoteString(title.split(".")[0])
     if flipped_paths is not None:
         screen = Flip_horizontal(screen, flipped_paths, flip_group_contents=True)
     Titlebar(

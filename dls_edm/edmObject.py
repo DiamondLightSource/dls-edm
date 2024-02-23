@@ -10,7 +10,10 @@ import os
 import pickle
 import sys
 from pathlib import Path
-from typing import Dict, ItemsView, KeysView, List, Optional, Tuple, Union, ValuesView
+from typing import Dict, List, Tuple
+
+from edmProperties import EdmProperties
+from utils import write_colour_helper
 
 ignore_list = [
     "4 0 1",
@@ -22,25 +25,6 @@ ignore_list = [
 ]
 
 
-def get_dicts() -> (
-    Tuple[Dict[str, str], Dict[str, Union[str, bool, int, List[str], Dict]]]
-):
-    COLOUR: Dict[str, str] = {}
-    PROPERTIES: Dict[str, Union[str, bool, int, List[str], Dict]] = {}
-    # code to load the stored dictionaries
-    try:
-        file_path = Path.absolute(Path(__file__).parent)  # + "/helper.pkl")
-        file_path = file_path.joinpath("helper.pkl")
-        file = file_path.open("rb")
-        pkl = pickle.load(file)
-        (COLOUR, PROPERTIES) = pkl
-    except IOError as e:
-        print(f"IOError: \n{e}")
-        (COLOUR, PROPERTIES) = ({}, {})
-
-    return COLOUR, PROPERTIES
-
-
 class EdmObject:
     """
     A python representation of an Edm Object.
@@ -48,7 +32,7 @@ class EdmObject:
     Attributes:
     Type - Type of self, like 'Group', 'Screen' or 'Embedded Window'
     Properties - Dictionary containing edm properties like w, h, font
-    Objects - List of child EdmObjects if self.Type=='Group' or 'Screen'
+    Objects - List of child EdmObjects if self.Properties.Type=='Group' or 'Screen'
     Parent - Pointer to parent if self is a child of an EdmObject
     Colour - Colour index lookup dictionary eg Colour['White']='index 0'
 
@@ -77,7 +61,7 @@ class EdmObject:
     # beginObjectProperties and endObjectProperties are not needed
     o.setPosition(57,95)
     o.setDimensions(167,161)
-    # can either use the index numbers, or look them up from self.Colour
+    # can either use the index numbers, or look them up from self.Properties.Colour
     o["lineColor"] = "index 14"
     o["fillColor"] = o.Colour["White"]
     """
@@ -93,83 +77,23 @@ class EdmObject:
                 Defaults to True.
         """
         # initialise variables
-        self.Type: str = "Invalid"
-        self.Properties: Dict[str, Union[str, bool, int, List[str], Dict]] = {}
         self.Objects: List[EdmObject] = []
-        self.Colour: Dict[str, str] = {}
-        self.Parent: Optional[EdmObject] = None
-        # set the type
-        self.setType(obj_type)
+        self.Parent: EdmObject | None = None
 
-        self.setProperties(defaults=defaults)
+        self.Properties: EdmProperties = EdmProperties(obj_type, defaults=defaults)
 
-    # make item look like a dict
-    def __setitem__(self, key: str, value: Union[str, int, List[str], Dict]) -> None:
-        return self.Properties.__setitem__(key, value)
+        if self.Properties.Type != "Screen":
+            self.Properties["object"] = f"active{obj_type.replace(' ', '')}Class"
 
-    def __getitem__(self, key: str) -> Union[str, int, List[str], Dict]:
-        return self.Properties.__getitem__(key)
-
-    def __delitem__(self, key: str) -> None:
-        return self.Properties.__delitem__(key)
-
-    def __contains__(self, key: str) -> bool:
-        return self.Properties.__contains__(key)
-
-    def items(
-        self,
-    ) -> ItemsView[str, Union[str, bool, int, List[str], Dict]]:
-        return self.Properties.items()
-
-    def keys(self) -> KeysView[str]:
-        # assert self.Properties.keys().__class__ == {}.keys().__class__
-        return self.Properties.keys()
-
-    def values(self) -> ValuesView[Union[str, bool, int, List[str], Dict]]:
-        # assert self.Properties.values().__class__ == {}.values().__class__
-        return self.Properties.values()
-
-    def setType(self, obj_type: str) -> None:
-        """
-        Set EdmObject Type.
-
-        Set the Type of self to be obj_type.
-
-        Args:
-            obj_type (str): Type of self, like 'Group', 'Screen' or
-                'Embedded Window'. Defaults to "Invalid".
-        """
-        self.Type = obj_type
-
-        if obj_type != "Screen":
-            self["object"] = "active" + obj_type.replace(" ", "") + "Class"
         # If PROPERTIES isn't defined, set some sensible values
-        self["major"], self["minor"], self["release"] = (4, 0, 0)
-        self["x"], self["y"], self["w"], self["h"] = (0, 0, 100, 100)
+        self.Properties["major"] = 4
+        self.Properties["minor"] = 0
+        self.Properties["release"] = 0
 
-    def setProperties(self, defaults: bool = True):
-        """
-        Set EdmObject Properties.
-
-        Attempt to populate self.Properties with default values and
-        self.Colours with the index lookup table.
-
-        Args:
-            defaults (bool, optional): Flag to use default values for Type.
-                Defaults to True.
-        """
-        COLOUR, PROPERTIES = get_dicts()
-
-        if PROPERTIES:
-            self.Colour = COLOUR
-            try:
-                default_dict = PROPERTIES[self.Type]
-                if defaults:
-                    self.Properties.update(default_dict)
-            except Exception as e:
-                print(
-                    f"Exception caught when attempting to set default properties:\n {e}"
-                )
+        self.Properties["x"] = 0
+        self.Properties["y"] = 0
+        self.Properties["w"] = 100
+        self.Properties["h"] = 100
 
     def copy(self) -> "EdmObject":
         """
@@ -181,23 +105,24 @@ class EdmObject:
         Returns:
             EdmObject: A python representation of an Edm Object.
         """
-        new_ob: EdmObject = EdmObject(self.Type, defaults=False)
+        # print("Copy, type:", self.Properties.Type)
+        new_ob: EdmObject = EdmObject(self.Properties.Type, defaults=False)
         # need to explicitly copy some properties
-        for k, v in self.__dict__.items():
-            if v.__class__ == {}.__class__:
-                new_ob[k] = v.copy()
-            elif v.__class__ == [].__class__:
-                new_ob[k] = v[:]
+        for k, v in self.Properties.items():
+            if isinstance(v, Dict):
+                new_ob.Properties[k] = v.copy()
+            elif isinstance(v, List):
+                new_ob.Properties[k] = v[:]
             else:
-                new_ob[k] = v
+                new_ob.Properties[k] = v
         # add copies of child objects
         for ob in self.Objects:
             new_ob.addObject(ob.copy())
         return new_ob
 
     def write(
-        self, text: Union[str, List[str]], expect: Optional[str] = "type"
-    ) -> Optional[Union[str, List[str]]]:
+        self, text: str | List[str], expect: str | None = "type"
+    ) -> str | List[str] | None:
         """
         Populate the object's properties with the selected text.
 
@@ -216,124 +141,77 @@ class EdmObject:
         """
         lines: List[str]
 
-        if [].__class__ == text.__class__:
+        if isinstance(text, List):
             # make sure all elements are of type str
             assert all(isinstance(x, str) for x in text)
             lines = text
         else:
-            assert isinstance(text, str)
+            assert type(text) == str
             # if we are being passed text, we must be the top level object
             lines = text.strip().splitlines()
             # we must now clear all our properties to avoid junk tags
-            self.Properties = {}
+            self.Properties.clear_properties()
 
-        if self.Type == "Screen":
+        if self.Properties.Type == "Screen":
             expect = None
 
-        while True:
-            # If the lines list is now empty, or only 1 empty line, we are now at the
-            # end of the file
-            if len(lines) == 0 or (len(lines) == 1 and lines[0] == ""):
-                break
+        key: str | None = ""
+        value: Dict[str, str | int] | List[str | int] | None = []
+        # multiline_dict: Dict[str, str | bool | int] = {}
 
-            # Reset at beginning of new search
-            obj_lines = []
-            obj_start_line = -1
-            obj_end_line = -1
+        # Need to find the start and end of an object
+        for i, line in enumerate(lines):
+            if not line or line in ignore_list:
+                pass
+            elif expect in ["type", "multiline"]:
+                match expect:
+                    case "type":
+                        self.Properties.Type = self._get_edl_object_type(line)
+                        expect = None
+                    case "multiline":
+                        # value = self._write_edl_multiline(line)
+                        if line == "}":
+                            assert isinstance(key, str)
+                            self.Properties[key] = value
+                            key = None
+                            value = None
+                            expect = None
+                        else:
+                            value = self._write_edl_multiline(line, value)
 
-            # Need to find the start and end of an object
-            for i, line in enumerate(lines):
-                # If line empty or in ignore list, go to next line
-                if not line or line in ignore_list:
-                    pass
-                if line[0].startswith("# ("):
-                    obj_start_line = i
-                elif line == "endObjectProperites" and obj_start_line != -1:
-                    obj_end_line = i
-                    obj_lines = lines[obj_start_line : obj_end_line + 1]
-                    break
-
-            obj_dict = self._get_edl_object_from_lines(obj_lines, expect)
-
-            # k: str
-            # v: Union[str, bool, int, List[Union[str, int]]]
-
-            for k, v in obj_dict.items():
-                if k == "Type":
-                    assert isinstance(v, str)
-                    self.Type = v
+            elif line.startswith("# ("):
+                return self._write_new_edm_object(lines[i:])
+            # return the unparsed lines to parent object's write method
+            elif line == "endObjectProperties":
+                return lines[i + 1 :]
+            # set the property in self
+            else:
+                list_ = line.strip().split()
+                if len(list_) == 1:
+                    self.Properties[list_[0]] = True
+                elif list_[1] == "{":
+                    key = list_[0]
+                    expect = "multiline"
                 else:
-                    self[k] = v
-
-            # Discard previous object lines
-            lines = lines[obj_end_line + 1 :]
+                    self.Properties[list_[0]] = line[
+                        line.find(list_[0]) + len(list_[0]) :
+                    ].strip()
+                    if list_[0] in ["x", "y", "w", "h"]:
+                        tmp = self.Properties[list_[0]]
+                        assert isinstance(tmp, str)
+                        assert tmp.lstrip("-").isdecimal()
+                        self.Properties[list_[0]] = int(tmp)
 
         return None
 
-    def _get_edl_object_from_lines(
-        self, obj_lines: List[str], expect: Optional[str]
-    ) -> Dict[str, Union[str, bool, int, List[str]]]:
-        #  Set up empty dictionary
-        # object_dict: Dict[str, Union[str, bool, int, List[Union[str, int]]]] = {}
-        object_dict: Dict = {}
-        key: str = ""
-        # value: Union[Dict[str, Union[str, int]], List[Union[str, int]]] = []
-        value: Union[Dict, List] = []
-        # multiline_dict: Dict[str, Union[str, bool, int]] = {}
-
-        # First line of object should always include type
-        object_dict["Type"] = self._get_edl_object_type(obj_lines[0])
-
-        expect = None
-        # Pop first line from list as no longer needed to be parsed
-        obj_lines = obj_lines[1:]
-
-        # basic object parser
-        for i, line in enumerate(obj_lines):
-            # Attempt to split line into parts, if there are multiple on the line
-            parts = line.split()
-
-            # see if we're expecting a property spanning multiple lines
-            if expect == "multiline":
-                # If the line is a '}' it's the end of the multiline
-                if line == "}":
-                    object_dict[key] = value
-                    key = ""
-                    value = []
-                    expect = None
-                # Otherwise, construct the multiline list
-                else:
-                    value = self._write_edl_multiline(line, value)
-
-            # If only one part, set to True
-            elif len(parts) == 1:
-                object_dict[parts[0]] = True
-            # If '{' in second part, it's the start of a multiline
-            elif parts[1] == "{":
-                key = parts[0]
-                expect = "multiline"
-            elif line == "endObjectProperties":
-                # obj_end_line = i
-                break
-            else:
-                object_dict[parts[0]] = line[
-                    line.find(parts[0]) + len([parts][0]) :
-                ].strip()
-                if parts[0] in ["x", "y", "w", "h"]:
-                    obj_part = object_dict[parts[0]]
-                    assert isinstance(obj_part, str)
-                    object_dict[parts[0]] = int(obj_part)
-
-        return object_dict
-
     def _get_edl_object_type(self, line: str) -> str:
         assert line.startswith("# ("), "Expected '# (Type)', got " + line
-        # self.Type = line[3 : line.find(")")]
-        return line[3 : line.find(")")]
+        # self.Properties.Type = line[3 : line.find(")")]
+        return line[line.find("(") + 1 : line.find(")")]
 
     def _write_edl_multiline(
-        self, line: str, value: Union[List, Dict]
-    ) -> Union[Dict[str, Union[str, int]], List[Union[str, int]]]:
+        self, line: str, value: Dict[str, str | int] | List[str | int] | None
+    ) -> Dict[str, str | int] | List[str | int]:
         list_ = []
         in_quotes = False
 
@@ -360,16 +238,15 @@ class EdmObject:
             value[list_[0]] = " ".join(list_[1:])
         return value
 
-    # def _write_new_edm_object(
-    #     self, lines: str, index: int
-    # ) -> Optional[Union[str, List[str]]]:
-    #     more_lines: List[str]
+    def _write_new_edm_object(self, lines: List[str]) -> str | List[str] | None:
+        more_lines: List[str]
 
-    #     ob = EdmObject(defaults=False)
-    #     more_lines = ob.write(lines[index:])
-    #     assert isinstance(more_lines, List[str])
-    #     self.addObject(ob)
-    #     return self.write(more_lines, None)
+        obj_type = self._get_edl_object_type(lines[0])
+        ob = EdmObject(obj_type, defaults=False)
+        more_lines = ob.write(lines)
+        assert isinstance(more_lines, List)
+        self.addObject(ob)
+        return self.write(more_lines, None)
 
     def flatten(self, include_groups: bool = True) -> List["EdmObject"]:
         """Flatten the tree of objects, and return it as a list.
@@ -379,7 +256,7 @@ class EdmObject:
         Returns:
             List[EdmObject]: A list of EdmObjects in the tree
         """
-        if not include_groups and self.Type == "Group":
+        if not include_groups and self.Properties.Type == "Group":
             output = []
         else:
             output = [self]
@@ -391,7 +268,7 @@ class EdmObject:
         # internal function to export values of filter_keys if they exist
         lines = []
         # key_set is the set of all property keys
-        keys = list(self.keys())
+        keys = list(self.Properties.keys())
         key_set = set(keys)
         # filter_set is the set of keys to filter against
         filter_set = set(filter_keys)
@@ -401,30 +278,31 @@ class EdmObject:
                 list(filter_set - key_set)
             )
         # Make sure related displays with no filenames have the right numDsps
-        if self.Type == "Related Display":
+        if self.Properties.Type == "Related Display":
+            tmp = self.Properties["displayFileName"]
+            assert isinstance(tmp, Dict)
             if (
-                "displayFileName" in list(self.keys())
-                and len(list(self["displayFileName"].keys())) == 1
-                and self["displayFileName"][list(self["displayFileName"].keys())[0]]
-                == '""'
+                "displayFileName" in list(self.Properties.keys())
+                and len(tmp.keys()) == 1
+                and tmp[list(tmp.keys())[0]] == '""'
             ):
-                self["displayFileName"] = {}
-                self["symbols"] = {}
-                self["numDsps"] = 0
+                self.Properties["displayFileName"] = {}
+                self.Properties["symbols"] = {}
+                self.Properties["numDsps"] = 0
         # print the keys
         for key in sorted(filter_keys):
             if key in keys and not key == "object" and not key[:2] == "__":
-                value = self[key]
+                value = self.Properties[key]
                 if value is True:
                     # output a flag
                     lines.append(key)
                 elif value is not False:
-                    if value.__class__ == [].__class__:
+                    if isinstance(value, List):
                         # output a multiline string
                         text_vals = ["  %s\n" % str(v) for v in value]
                         if text_vals:
                             lines.append(key + " {\n" + "".join(text_vals) + "}")
-                    elif value.__class__ == {}.__class__:
+                    elif isinstance(value, Dict):
                         # output a multiline dict
                         vals = list(value.keys())
                         vals.sort()
@@ -466,8 +344,8 @@ class EdmObject:
 
     def setShadows(self) -> None:
         """Set the top and bottom shadows of self to be reasonable value."""
-        self["topShadowColor"] = self.Colour["Top Shadow"]
-        self["botShadowColor"] = self.Colour["Bottom Shadow"]
+        self.Properties["topShadowColor"] = self.Properties.Colour["Top Shadow"]
+        self.Properties["botShadowColor"] = self.Properties.Colour["Bottom Shadow"]
 
     def replaceObject(self, ob: "EdmObject", new_ob: "EdmObject"):
         """Replace the first instance of old_object in self.Objects by new_object.
@@ -505,24 +383,30 @@ class EdmObject:
         first_keys = ["major", "minor", "release", "x", "y", "w", "h"]
         last_keys = ["visPv", "visInvert", "visMin", "visMax"]
         lines = []
-        if self.Type == "Screen":
+        if self.Properties.Type == "Screen":
             lines.append("4 0 1")
             lines.append("beginScreenProperties")
             lines.append(self.__readKeys(first_keys))
-            lines.append(self.__readKeys(list(set(self.keys()) - set(first_keys))))
+            lines.append(
+                self.__readKeys(list(set(self.Properties.keys()) - set(first_keys)))
+            )
             lines.append("endScreenProperties")
             lines.append("")
             for ob in self.Objects:
                 lines.append(ob.read())
         else:
-            lines.append("# (%s)" % self.Type)
-            lines.append("object %s" % self["object"])
+            lines.append("# (%s)" % self.Properties.Type)
+            lines.append("object %s" % self.Properties["object"])
             lines.append("beginObjectProperties")
             lines.append(self.__readKeys(first_keys))
-            if self.Type == "Group":
+            if self.Properties.Type == "Group":
                 lines.append(
                     self.__readKeys(
-                        list(set(self.keys()) - set(first_keys) - set(last_keys))
+                        list(
+                            set(self.Properties.keys())
+                            - set(first_keys)
+                            - set(last_keys)
+                        )
                     )
                 )
                 lines.append("")
@@ -534,37 +418,34 @@ class EdmObject:
                 lines.append("")
                 lines.append(self.__readKeys(last_keys, assert_existence=False))
             else:
-                lines.append(self.__readKeys(list(set(self.keys()) - set(first_keys))))
+                lines.append(
+                    self.__readKeys(list(set(self.Properties.keys()) - set(first_keys)))
+                )
             lines.append("endObjectProperties")
             lines.append("")
         return "\n".join(lines)
 
     def addObject(self, ob: "EdmObject") -> None:
         """
-        Add another EdmObject to self. Fails if self.Type is not a Group or a Screen.
+        Add another EdmObject to self. Fails if self.Properties.Type is not a Group, Screen or EdmTable.
 
         Args:
             ob (EdmObject): EdmObject to add to self
         """
-        assert self.Type in ["Group", "Screen"], "Trying to add object to a " + str(
-            self.Type
+        assert self.Properties.Type in [
+            "Group",
+            "Screen",
+            "EdmTable",
+        ], f"Trying to add {ob.Properties.Type} to a {self.Properties.Type}"
+        assert ob.Properties.Type != "Screen", "Can't add a Screen to a " + str(
+            self.Properties.Type
         )
-        assert ob.Type != "Screen", "Can't add a Screen to a " + str(self.Type)
         self.Objects.append(ob)
         ob.Parent = self
 
     def __repr__(self, level=0):
         """Make "print self" produce a useful output."""
-        output = (
-            " |" * level
-            + "-"
-            + self.Type
-            + " at ("
-            + str(self["x"])
-            + ","
-            + str(self["y"])
-            + ")\n"
-        )
+        output = f' |{level}-{self.Properties.Type} at ({str(self.Properties["x"])},{str(self.Properties["y"])}\n'
         for ob in self.Objects:
             output += ob.__repr__(level + 1)
         return output
@@ -573,9 +454,9 @@ class EdmObject:
         """
         Autofit dimensions of objects.
 
-        If self.Type is a Group or a Screen, then autofit all children. Next, if
-        self.Type is Lines or Group, resize position and dimensions to enclose
-        its contents. Alternatively if self.Type is Screen, resize to fit
+        If self.Properties.Type is a Group or a Screen, then autofit all children. Next, if
+        self.Properties.Type is Lines or Group, resize position and dimensions to enclose
+        its contents. Alternatively if self.Properties.Type is Screen, resize to fit
         contents, adding an x and y border (default 10 pixels each)
 
         Args:
@@ -587,7 +468,7 @@ class EdmObject:
         maxy = 0
         miny = 100000
         for ob in self.Objects:
-            if not ob.Type == "Menu Mux PV":
+            if not ob.Properties.Type == "Menu Mux PV":
                 ob.autofitDimensions()
                 x, y = ob.getPosition()
                 w, h = ob.getDimensions()
@@ -595,7 +476,7 @@ class EdmObject:
                 maxy = max(maxy, y + h)
                 minx = min(minx, x)
                 miny = min(miny, y)
-        if self.Type == "Screen":
+        if self.Properties.Type == "Screen":
             # if any objects are inside borders, move them
             if xborder - minx > 0:
                 deltax = xborder - minx
@@ -611,26 +492,39 @@ class EdmObject:
             self.setDimensions(
                 maxx + deltax + xborder, maxy + deltay + yborder, resize_objects=False
             )
-        elif self.Type == "Group":
+        elif self.Properties.Type == "Group":
             self.setDimensions(maxx - minx, maxy - miny, resize_objects=False)
             self.setPosition(minx, miny, move_objects=False)
-        elif self.Type == "Lines" and "xPoints" in self and self["xPoints"]:
-            # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
-            assert isinstance(self, EdmObject)
+        elif (
+            self.Properties.Type == "Lines"
+            and "xPoints" in self.Properties
+            and self.Properties["xPoints"]
+        ):
+            xtmp = self.Properties["xPoints"]
+            assert isinstance(xtmp, Dict)
+            xpts = [int(xtmp[x]) for x in xtmp.keys()]
 
-            xpts = [int(self["xPoints"][x]) for x in list(self["xPoints"].keys())]
-            ypts = [int(self["yPoints"][y]) for y in list(self["yPoints"].keys())]
-            self["x"], self["y"] = min(xpts), min(ypts)
-            self["w"], self["h"] = max(xpts) - min(xpts), max(ypts) - min(ypts)
+            ytmp = self.Properties["yPoints"]
+            assert isinstance(ytmp, Dict)
+            ypts = [int(ytmp[y]) for y in ytmp.keys()]
+            self.Properties["x"], self.Properties["y"] = min(xpts), min(ypts)
+            self.Properties["w"], self.Properties["h"] = max(xpts) - min(xpts), max(
+                ypts
+            ) - min(ypts)
 
     def getDimensions(self) -> Tuple[int, int]:
         """Return a tuple of the width and height of self as integers."""
-        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, EdmObject)
-        return self["w"], self["h"]
+        wtmp, htmp = self.Properties["w"], self.Properties["h"]
+        assert isinstance(wtmp, int)
+        assert isinstance(htmp, int)
+        return wtmp, htmp
 
     def setDimensions(
-        self, w: int, h: int, factors: bool = False, resize_objects: bool = True
+        self,
+        w: int | float,
+        h: int | float,
+        factors: bool = False,
+        resize_objects: bool = True,
     ) -> None:
         """Set the dimensions of self.
 
@@ -646,28 +540,30 @@ class EdmObject:
             resize_objects (bool, optional): Flag to determine if children object need
                 resizing proprotionally. Defaults to True.
         """
-        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, EdmObject)
-
+        wtmp, htmp = self.Properties["w"], self.Properties["h"]
+        assert isinstance(wtmp, int)
+        assert isinstance(htmp, int)
         if factors:
-            neww = int(w * int(self["w"]))
-            newh = int(h * int(self["h"]))
+            neww = int(w * int(wtmp))
+            newh = int(h * int(htmp))
             factorw = w
             factorh = h
         else:
-            neww = w
-            newh = h
+            neww = int(w)
+            newh = int(h)
             factorw = 1
             factorh = 1
-            if int(self["w"]) != 0:
-                factorw = float(w) / float(self["w"])
-            if int(self["h"]) != 0:
-                factorh = float(h) / float(self["h"])
-        if self.Type == "Screen":
+            if int(wtmp) != 0:
+                factorw = float(w) / float(wtmp)
+            if int(htmp) != 0:
+                factorh = float(h) / float(htmp)
+        if self.Properties.Type == "Screen":
             x, y = (0, 0)
         else:
             x, y = self.getPosition()
-        if (self.Type == "Group" or self.Type == "Screen") and resize_objects:
+        if (
+            self.Properties.Type == "Group" or self.Properties.Type == "Screen"
+        ) and resize_objects:
             for ob in self.Objects:
                 obx, oby = ob.getPosition()
                 ob.setPosition(
@@ -675,29 +571,30 @@ class EdmObject:
                 )
                 ob.setDimensions(factorw, factorh, factors=True)
         elif (
-            self.Type == "Lines"
-            and "xPoints" in self
-            and self["xPoints"]
+            self.Properties.Type == "Lines"
+            and "xPoints" in self.Properties
+            and self.Properties["xPoints"]
             and resize_objects
         ):
-            for point in list(self["xPoints"].keys()):
-                self["xPoints"][point] = str(
-                    int(factorw * (int(self["xPoints"][point]) - x) + x)
+            xtmp, ytmp = self.Properties["xPoints"], self.Properties["yPoints"]
+            assert isinstance(xtmp, Dict)
+            assert isinstance(ytmp, Dict)
+
+            for point in list(xtmp.keys()):
+                self.Properties["xPoints"][point] = str(
+                    int(factorw * (int(xtmp[point]) - x) + x)
                 )
-            for point in list(self["yPoints"].keys()):
-                self["yPoints"][point] = str(
-                    int(factorh * (int(self["yPoints"][point]) - y) + y)
+            for point in list(ytmp.keys()):
+                self.Properties["yPoints"][point] = str(
+                    int(factorh * (int(ytmp[point]) - y) + y)
                 )
-        elif "Image" in self.Type and resize_objects:
+        elif "Image" in self.Properties.Type and resize_objects:
             print(
-                "***Warning: EDM Image container for "
-                + self["file"]
-                + " has been resized. "
-                + "Image may not display properly",
+                f'***Warning: EDM Image container for {self.Properties["file"]} has been resized. Image may not display properly',
                 file=sys.stderr,
             )
-        self["w"] = neww
-        self["h"] = newh
+        self.Properties["w"] = neww
+        self.Properties["h"] = newh
 
     def getPosition(self) -> Tuple[int, int]:
         """Return a tuple of the x position and y position of self as integers.
@@ -705,9 +602,10 @@ class EdmObject:
         Returns:
             Tuple[int, int]: A tuple of the X and Y positions
         """
-        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, EdmObject)
-        return self["x"], self["y"]
+        xtmp, ytmp = self.Properties["x"], self.Properties["y"]
+        assert isinstance(xtmp, int)
+        assert isinstance(ytmp, int)
+        return xtmp, ytmp
 
     def toint(self, s):
         """Convert elements in s to int if they are a digit."""
@@ -730,32 +628,37 @@ class EdmObject:
             move_objects (bool, optional): Flag to determine if children should be
                 moved proporionally. Defaults to True.
         """
-        # Make sure self is a EdmObject due to __getitem__ and __setitem__ overloading
-        assert isinstance(self, EdmObject)
+        xtmp, ytmp = self.Properties["x"], self.Properties["y"]
+        assert isinstance(xtmp, int)
+        assert isinstance(ytmp, int)
         if relative:
-            newx = x + self["x"]
-            newy = y + self["y"]
+            newx = x + xtmp
+            newy = y + ytmp
             deltax = x
             deltay = y
         else:
             newx = x
             newy = y
-            deltax = x - self["x"]
-            deltay = y - self["y"]
-        if self.Type == "Group" and move_objects:
+            deltax = x - xtmp
+            deltay = y - ytmp
+        if self.Properties.Type == "Group" and move_objects:
             for ob in self.Objects:
                 ob.setPosition(deltax, deltay, relative=True)
-        elif self.Type == "Lines" and "xPoints" in self and self["xPoints"]:
-            for point in list(self["xPoints"].keys()):
-                self["xPoints"][point] = str(
-                    self.toint(self["xPoints"][point]) + deltax
+        elif (
+            self.Properties.Type == "Lines"
+            and "xPoints" in self.Properties
+            and self.Properties["xPoints"]
+        ):
+            for point in list(self.Properties["xPoints"].keys()):
+                self.Properties["xPoints"][point] = str(
+                    self.toint(self.Properties["xPoints"][point]) + deltax
                 )
-            for point in list(self["yPoints"].keys()):
-                self["yPoints"][point] = str(
-                    self.toint(self["yPoints"][point]) + deltay
+            for point in list(self.Properties["yPoints"].keys()):
+                self.Properties["yPoints"][point] = str(
+                    self.toint(self.Properties["yPoints"][point]) + deltay
                 )
-        self["x"] = newx
-        self["y"] = newy
+        self.Properties["x"] = newx
+        self.Properties["y"] = newy
 
     def substitute(self, old_text: str, new_text: str) -> None:
         """
@@ -769,9 +672,9 @@ class EdmObject:
             new_text (str): Text to replace old_text with
         """
         # key: str
-        # value: Union[List[str], Dict]
+        # value: List[str] | Dict
 
-        for key, value in self.items():
+        for key, value in self.Properties.items():
             if new_text == "''":
                 new = ""
             else:
@@ -782,7 +685,7 @@ class EdmObject:
                     assert isinstance(x, str)
                     return x.replace(old_text, new)
 
-                self[key] = list(map(process_string, value))
+                self.Properties[key] = list(map(process_string, value))
             elif type(value) == dict:
                 # output a multiline dict
                 for k, v in value.items():
@@ -804,7 +707,7 @@ class EdmObject:
             else:
                 try:
                     assert isinstance(value, str)
-                    self[key] = value.replace(old_text, new)
+                    self.Properties[key] = value.replace(old_text, new)
                 except AssertionError:
                     pass
         for ob in self.Objects:
@@ -859,7 +762,6 @@ def write_helper() -> None:
     EdmObject in imported again, these dictionaries are read and imported, and
     used to provide some sensible options for a default object.
     """
-    get_dicts()
     print("Building helper object...")
 
     build_dir = Path.absolute(Path(__file__).parent)
@@ -870,24 +772,8 @@ def write_helper() -> None:
         edm_path = edm_path.readlink()
     edm_dir = Path.joinpath(edm_path.parent, "..", "..", "src", "edm")
 
-    # create the COLOUR dictionary
-    COLOUR = {"White": "index 0"}
-
-    with open(Path.joinpath(edm_dir, "setup", "colors.list"), "r") as file:
-        lines = file.readlines()
-
-    for line in lines:
-        # read each line in colors.list into the dict
-        if line.startswith("static"):
-            index = line.split()[1]
-            name = line[
-                line.find('"') : line.find('"', line.find('"') + 1) + 1
-            ].replace('"', "")
-            COLOUR[name] = f"index {index}"
-        elif line.startswith("rule"):
-            index = line.split()[1]
-            name = line.split()[2]
-            COLOUR[name] = f"index {index}"
+    COLOUR = write_colour_helper()
+    assert isinstance(COLOUR, Dict)
 
     # build up a list of include dirs to pass to g++
     dirs = [
@@ -914,20 +800,23 @@ def write_helper() -> None:
 
     # get rid of the junk output by one widget
     # For some reason if the codec isn't 'latin-1' this line fails most of the time???
-    screen_text = codecs.open("allwidgets.edl", "r", encoding="latin-1").read()
-    print("-- screen_text read --")
-    screen_text = screen_text.replace(
+    all_widgets = codecs.open("allwidgets.edl", "r", encoding="latin-1").read()
+    print("-- all_widgets read --")
+    all_widgets = all_widgets.replace(
         "# Additional properties\nbeginObjectProperties\nendObjectProperties", ""
     )
 
     # the output of the program isn't a proper screen, so make it so
-    all_obs = EdmObject("Screen")
+    # defaults needs to be False as properties_helper.pkl may not exist and cause an error
+    screen_obj = EdmObject("Screen", defaults=False)
     # fix some code, then add a header
-    all_obs.write(all_obs.read() + "\n" + screen_text)
+    with open("screen_obj.txt", "w") as f:
+        f.writelines(screen_obj.read() + "\n" + all_widgets)
+    screen_obj.write(screen_obj.read() + "\n" + all_widgets)
 
     print("-- Setting up screen properties --")
 
-    screen_properties: Dict[str, Union[str, bool, int, List[str], Dict]] = {}
+    screen_properties: Dict[str, str | bool | int | List[str] | Dict] = {}
     # write the default screen properties
     screen_properties["major"] = 4
     screen_properties["minor"] = 0
@@ -952,30 +841,33 @@ def write_helper() -> None:
     screen_properties["snapToGrid"] = True
     screen_properties["disableScroll"] = False
     PROPERTIES = {"Screen": screen_properties}
-    for ob in all_obs.Objects:
+    for ob in screen_obj.Objects:
         # write the default properties for each object
-        ob["w"] = 100
-        ob["h"] = 100
-        ob["x"] = 0
-        ob["y"] = 0
+        ob.Properties["w"] = 100
+        ob.Properties["h"] = 100
+        ob.Properties["x"] = 0
+        ob.Properties["y"] = 0
         for key in ["font", "fgColor", "bgColor"]:
-            if key in ob:
-                ob[key] = screen_properties[key]
-        if ob.Type == "Lines":
-            del ob["xPoints"]
-            del ob["yPoints"]
-        for key, item in list(ob.items()):
+            if key in ob.Properties:
+                ob.Properties[key] = screen_properties[key]
+        if ob.Properties.Type == "Lines":
+            del ob.Properties["xPoints"]
+            del ob.Properties["yPoints"]
+        for key, item in list(ob.Properties.items()):
             # remove anything that edm regards as a flag
             # this avoids
             if item is True:
-                ob[key] = False
-            elif "TYP" in key.upper():
-                del ob[key]
-        PROPERTIES[ob.Type] = ob.Properties.copy()
-    pkl_file = build_dir.joinpath(Path("helper.pkl"))
-    pkl_file.touch()
-    with pkl_file.open("wb") as f:
-        pickle.dump((COLOUR, PROPERTIES), f, 0)
+                ob.Properties[key] = False
+            elif key.upper() == "TYPE":
+                del ob.Properties[key]
+        # print(ob.__dict__)
+        PROPERTIES[ob.Properties.Type] = ob.copy().__dict__
+
+    prop_pkl_file = build_dir.joinpath(Path("properties_helper.pkl"))
+    prop_pkl_file.touch()
+    with prop_pkl_file.open("wb") as f:
+        # print(PROPERTIES)
+        pickle.dump(PROPERTIES, f, 0)
     print("Done")
 
 

@@ -1,17 +1,17 @@
 """Adds a titlebar and exit button to the screen."""
-from optparse import OptionParser
+import argparse
+from pathlib import Path
 
-from .common import (
+from common import (
     exit_button,
     raised_PV_button_circle,
     raised_PV_circle,
     raised_PV_shell_circle,
     raised_text_circle,
 )
-from .edmObject import EdmObject, quoteListString, quoteString
+from edmObject import EdmObject, quoteListString, quoteString
 
-author = "Tom Cobb"
-usage = """%prog [options] <input_screen_filename> <output_screen_filename>"""
+author = "Oliver Copping"
 
 
 def titlebar_group(width: int, tooltip_str: str) -> EdmObject:
@@ -30,25 +30,27 @@ def titlebar_group(width: int, tooltip_str: str) -> EdmObject:
     top_shadow = EdmObject("Rectangle")
     top_shadow.setPosition(0, 2)
     top_shadow.setDimensions(width - 2, 25)
-    top_shadow["lineColor"] = top_shadow.Colour["Top Shadow"]
+    top_shadow.Properties["lineColor"] = top_shadow.Properties.Colour["Top Shadow"]
     group.addObject(top_shadow)
     bottom_shadow = EdmObject("Rectangle")
     bottom_shadow.setPosition(1, 3)
     bottom_shadow.setDimensions(width - 2, 25)
-    bottom_shadow["lineColor"] = bottom_shadow.Colour["Bottom Shadow"]
+    bottom_shadow.Properties["lineColor"] = bottom_shadow.Properties.Colour[
+        "Bottom Shadow"
+    ]
     group.addObject(bottom_shadow)
     tooltip = EdmObject("Related Display")
     tooltip.setPosition(1, 3)
     tooltip.setDimensions(width - 2, 24)
-    tooltip["xPosOffset"] = 5
-    tooltip["yPosOffset"] = 5
-    tooltip["button3Popup"] = True
-    tooltip["invisible"] = True
-    tooltip["buttonLabel"] = quoteString("tooltip")
-    tooltip["displayFileName"] = {0: quoteString(tooltip_str)}
-    tooltip["setPosition"] = {0: quoteString("button")}
-    tooltip["font"] = quoteString("arial-bold-r-14.0")
-    tooltip["numDsps"] = 1
+    tooltip.Properties["xPosOffset"] = 5
+    tooltip.Properties["yPosOffset"] = 5
+    tooltip.Properties["button3Popup"] = True
+    tooltip.Properties["invisible"] = True
+    tooltip.Properties["buttonLabel"] = quoteString("tooltip")
+    tooltip.Properties["displayFileName"] = {0: quoteString(tooltip_str)}
+    tooltip.Properties["setPosition"] = {0: quoteString("button")}
+    tooltip.Properties["font"] = quoteString("arial-bold-r-14.0")
+    tooltip.Properties["numDsps"] = 1
     group.addObject(tooltip)
     group.setPosition(0, 0, move_objects=False)
     group.setDimensions(width, 30, resize_objects=False)
@@ -71,12 +73,12 @@ def PV_titlebar(width: int, pv_string: str, tooltip: str, ta: str = "CO") -> Edm
     PV = EdmObject("Textupdate")
     PV.setPosition(1, 3)
     PV.setDimensions(width + 40, 25)
-    PV["font"] = quoteString("arial-bold-r-16.0")
-    PV["fontAlign"] = quoteString("center")
-    PV["fgColor"] = PV.Colour["Black"]
-    PV["bgColor"] = PV.Colour[ta + " title"]
-    PV["fill"] = True
-    PV["controlPv"] = quoteString(pv_string)
+    PV.Properties["font"] = quoteString("arial-bold-r-16.0")
+    PV.Properties["fontAlign"] = quoteString("center")
+    PV.Properties["fgColor"] = PV.Properties.Colour["Black"]
+    PV.Properties["bgColor"] = PV.Properties.Colour[ta + " title"]
+    PV.Properties["fill"] = True
+    PV.Properties["controlPv"] = quoteString(pv_string)
     group.addObject(PV)
     return group
 
@@ -99,11 +101,11 @@ def text_titlebar(
     text = EdmObject("Static Text")
     text.setPosition(1, 3)
     text.setDimensions(width + 40, 25)
-    text["font"] = quoteString("arial-bold-r-16.0")
-    text["fontAlign"] = quoteString("center")
-    text["bgColor"] = text.Colour[ta + " title"]
-    text["fgColor"] = text.Colour["Black"]
-    text["value"] = quoteListString(string_name)
+    text.Properties["font"] = quoteString("arial-bold-r-16.0")
+    text.Properties["fontAlign"] = quoteString("center")
+    text.Properties["bgColor"] = text.Properties.Colour[ta + " title"]
+    text.Properties["fgColor"] = text.Properties.Colour["Black"]
+    text.Properties["value"] = quoteListString(string_name)
     group.addObject(text)
     return group
 
@@ -158,14 +160,14 @@ def Titlebar(
     maxx = 0
     points = []
 
-    assert screen.Type == "Screen", (
-        "Can't add a titlebar to an object of type: " + screen.Type
-    )
+    assert (
+        screen.Properties.Type == "Screen"
+    ), f"Can't add a titlebar to an object of type: {screen.Properties.Type}"
 
     # 1st iteration to find max x and y
     screen.autofitDimensions(xborder=incrxspacer, yborder=incryspacer)
     for ob in screen.Objects:
-        if ob.Type not in ["Screen", "Menu Mux PV"]:
+        if ob.Properties.Type not in ["Screen", "Menu Mux PV"]:
             x, y = ob.getPosition()
             w, h = ob.getDimensions()
             maxx = max(maxx, x + w)
@@ -185,7 +187,7 @@ def Titlebar(
 
     # move all the objects down to put the titlebar in
     for ob in screen.Objects:
-        if ob.Type not in ["Screen", "Menu Mux PV"]:
+        if ob.Properties.Type not in ["Screen", "Menu Mux PV"]:
             ob.setPosition(0, incryheader, relative=True)
 
     # add the circular button on the left
@@ -212,14 +214,18 @@ def Titlebar(
     screen.addObject(exit)
 
     # set title
-    screen["title"] = quoteString(title)
+    screen.Properties["title"] = quoteString(title)
 
     return screen
 
 
 def cl_titlebar():
     """Command line helper function for titlebar."""
-    parser = OptionParser(usage)
+    parser = argparse.ArgumentParser(prog="Titlebar")
+
+    parser.add_argument("input_filename", nargs=1, type=Path)
+    parser.add_argument("output_filename", nargs=1, type=Path)
+
     ta = "CO"
     left = "text"
     left_text = "$(dom)"
@@ -227,73 +233,77 @@ def cl_titlebar():
     header_text = "Temperature Summary"
     tooltip = "generic-tooltip"
     title = "Temperatures - $(dom)"
-    parser.add_option(
-        "-t",
-        "--ta",
-        dest="ta",
+    parser.add_argument(
+        "-a",
+        "--area",
         metavar="TECHNICAL_AREA",
-        help="Technical area (MO,VA,DI,etc.) for colour of "
-        + "titlebar. Default:"
-        + ta,
+        default=ta,
+        help=f"Technical area (MO,VA,DI,etc.) for colour of titlebar. Default: {ta}",
     )
-    parser.add_option(
+    parser.add_argument(
         "-l",
         "--left",
-        dest="left",
         metavar="TYPE",
-        help="Left Button type: text, PV or button. Default:" + left,
+        default=left,
+        help=f"Left Button type: text, PV or button. Default: {left}",
     )
-    parser.add_option(
+    parser.add_argument(
         "-L",
         "--left_text",
-        dest="left_text",
         metavar="TEXT",
-        help="Left Button text: text or PV. Default:" + left_text,
+        default=left_text,
+        help=f"Left Button text: text or PV. Default: {left_text}",
     )
-    parser.add_option(
+    parser.add_argument(
         "-r",
         "--header",
-        dest="header",
         metavar="TYPE",
-        help="Header type: text or PV. Default:" + header,
+        default=header,
+        help=f"Header type: text or PV. Default: {header}",
     )
-    parser.add_option(
+    parser.add_argument(
         "-R",
         "--header_text",
-        dest="header_text",
         metavar="TEXT",
-        help="Header text: text or PV. Default:" + header_text,
+        default=header_text,
+        help=f"Header text: text or PV. Default: {header_text}",
     )
-    parser.add_option(
-        "-f",
-        "--filename",
-        dest="tooltip",
+    parser.add_argument(
+        "-t",
+        "--tooltip",
         metavar="FILE",
-        help="Tooltip filename. Default:" + tooltip,
+        default=tooltip,
+        help=f"Tooltip filename. Default: {tooltip}",
     )
-    parser.add_option(
+    parser.add_argument(
         "-i",
         "--title",
-        dest="title",
         metavar="TEXT",
-        help="Screen title text. Default:" + title,
+        default=title,
+        help=f"Screen title text. Default: {title}",
     )
 
-    (options, args) = parser.parse_args()
-    if len(args) != 2:
-        parser.error("Incorrect number of arguments")
+    args = parser.parse_args()
+
     screen = EdmObject("Screen")
-    file = open(args[0], "r")
-    screen.write(file.read())
-    file.close()
-    output = args[1]
-    for arg in ["ta", "left", "left_text", "header", "header_text", "tooltip", "title"]:
-        if eval("options." + arg):
-            exec(arg + "=options." + arg)
-    Titlebar(screen, ta, left, left_text, header, header_text, tooltip, title)
-    file = open(output, "w")
-    file.write(screen.read())
-    print("Titlebar added to:", args[0], "screen written to:", output)
+    with open(args.input_filename, "r") as f:
+        screen.write(f.read())
+
+    new_screen = Titlebar(
+        screen,
+        args.area,
+        args.left,
+        args.left_text,
+        args.header,
+        args.header_text,
+        args.tooltip,
+        args.title,
+    )
+    with open(args.output_filename, "w") as f:
+        f.write(new_screen.read())
+    print(
+        "Titlebar added to:", args.filename, "screen written to:", args.output_filename
+    )
 
 
 if __name__ == "__main__":

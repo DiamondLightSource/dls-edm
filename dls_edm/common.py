@@ -2,7 +2,7 @@
 
 from typing import Collection, Optional, Tuple
 
-from .edmObject import EdmObject, quoteListString, quoteString
+from edmObject import EdmObject, quoteListString, quoteString
 
 __all__ = [
     "arrow",
@@ -72,11 +72,11 @@ def label(
     ob = EdmObject("Static Text")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["font"] = quoteString("arial-medium-r-10.0")
-    ob["fgColor"] = ob.Colour["Black"]
-    ob["useDisplayBg"] = True
-    ob["value"] = quoteListString(text)
-    ob["fontAlign"] = quoteString(fontAlign)
+    ob.Properties["font"] = quoteString("arial-medium-r-10.0")
+    ob.Properties["fgColor"] = ob.Properties.Colour["Black"]
+    ob.Properties["useDisplayBg"] = True
+    ob.Properties["value"] = quoteListString(text)
+    ob.Properties["fontAlign"] = quoteString(fontAlign)
     return ob
 
 
@@ -111,17 +111,17 @@ def text_monitor(
     ob = EdmObject("Text Monitor")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["controlPv"] = quoteString(pv)
-    ob["font"] = quoteString("arial-medium-r-10.0")
-    ob["fgColor"] = ob.Colour["Black"]
-    ob["useDisplayBg"] = True
-    ob["precision"] = 3
-    ob["fontAlign"] = quoteString(fontAlign)
-    ob["smartRefresh"] = True
-    ob["fastUpdate"] = True
-    ob["showUnits"] = showUnits
-    ob["limitsFromDb"] = False
-    ob["newPos"] = True
+    ob.Properties["controlPv"] = quoteString(pv)
+    ob.Properties["font"] = quoteString("arial-medium-r-10.0")
+    ob.Properties["fgColor"] = ob.Properties.Colour["Black"]
+    ob.Properties["useDisplayBg"] = True
+    ob.Properties["precision"] = 3
+    ob.Properties["fontAlign"] = quoteString(fontAlign)
+    ob.Properties["smartRefresh"] = True
+    ob.Properties["fastUpdate"] = True
+    ob.Properties["showUnits"] = showUnits
+    ob.Properties["limitsFromDb"] = False
+    ob.Properties["newPos"] = True
     return ob
 
 
@@ -140,8 +140,8 @@ def dummy(x: int, y: int, w: int, h: int) -> EdmObject:
     ob = EdmObject("Rectangle")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["lineColor"] = ob.Colour["Canvas"]
-    ob["invisible"] = True
+    ob.Properties["lineColor"] = ob.Properties.Colour["Canvas"]
+    ob.Properties["invisible"] = True
     return ob
 
 
@@ -155,7 +155,7 @@ def rectangle(
 ):
     """Return a filled rectangle with position (x,y) dimensions (w,h).
 
-    fillColour and lineColour are looked up in ob.Colour
+    fillColour and lineColour are looked up in ob.Properties.Colour
 
     Args:
         x (int): X position of rectangle
@@ -169,9 +169,9 @@ def rectangle(
     ob = EdmObject("Rectangle")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["lineColor"] = ob.Colour[lineColour]
-    ob["fill"] = True
-    ob["fillColor"] = ob.Colour[fillColour]
+    ob.Properties["lineColor"] = ob.Properties.Colour[lineColour]
+    ob.Properties["fill"] = True
+    ob.Properties["fillColor"] = ob.Properties.Colour[fillColour]
     return ob
 
 
@@ -193,16 +193,16 @@ def tooltip(x: int, y: int, w: int, h: int, text: str) -> EdmObject:
     ob = EdmObject("Related Display")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["yPosOffset"] = max(h, 22) + 8
-    ob["xPosOffset"] = int(w / 2) - 100
-    ob["button3Popup"] = True
-    ob["invisible"] = True
-    ob["buttonLabel"] = quoteString("tooltip")
-    ob["numPvs"] = 4
-    ob["numDsps"] = 1
-    ob["displayFileName"] = {0: quoteString("symbols-tooltip-symbol")}
-    ob["setPosition"] = {0: quoteString("button")}
-    ob["symbols"] = {0: quoteString("text=" + text)}
+    ob.Properties["yPosOffset"] = max(h, 22) + 8
+    ob.Properties["xPosOffset"] = int(w / 2) - 100
+    ob.Properties["button3Popup"] = True
+    ob.Properties["invisible"] = True
+    ob.Properties["buttonLabel"] = quoteString("tooltip")
+    ob.Properties["numPvs"] = 4
+    ob.Properties["numDsps"] = 1
+    ob.Properties["displayFileName"] = {0: quoteString("symbols-tooltip-symbol")}
+    ob.Properties["setPosition"] = {0: quoteString("button")}
+    ob.Properties["symbols"] = {0: quoteString("text=" + text)}
     return ob
 
 
@@ -225,16 +225,16 @@ def rd(x: int, y: int, w: int, h: int, filename: str, symbols: str) -> EdmObject
     ob = EdmObject("Related Display")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["invisible"] = True
-    ob["buttonLabel"] = quoteString("device screen")
-    ob["numPvs"] = 4
+    ob.Properties["invisible"] = True
+    ob.Properties["buttonLabel"] = quoteString("device screen")
+    ob.Properties["numPvs"] = 4
     if filename:
-        ob["displayFileName"] = {0: quoteString(filename)}
-        ob["numDsps"] = 1
+        ob.Properties["displayFileName"] = {0: quoteString(filename)}
+        ob.Properties["numDsps"] = 1
         if symbols:
-            ob["symbols"] = {0: quoteString(symbols)}
+            ob.Properties["symbols"] = {0: quoteString(symbols)}
     else:
-        ob["numDsps"] = 0
+        ob.Properties["numDsps"] = 0
     return ob
 
 
@@ -256,10 +256,10 @@ def shell(x: int, y: int, w: int, h: int, command: str) -> EdmObject:
     ob = EdmObject("Shell Command")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["invisible"] = True
-    ob["buttonLabel"] = quoteString("Shell Command")
-    ob["numCmds"] = 1
-    ob["command"] = {0: quoteString(command)}
+    ob.Properties["invisible"] = True
+    ob.Properties["buttonLabel"] = quoteString("Shell Command")
+    ob.Properties["numCmds"] = 1
+    ob.Properties["command"] = {0: quoteString(command)}
     return ob
 
 
@@ -282,12 +282,12 @@ def shell_visible(x: int, y: int, w: int, h: int, text: str, command: str) -> Ed
     ob = EdmObject("Shell Command")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["buttonLabel"] = quoteString(text)
-    ob["numCmds"] = 1
-    ob["command"] = {0: quoteString(command)}
-    ob["fgColor"] = ob.Colour["Related display"]
-    ob["bgColor"] = ob.Colour["Canvas"]
-    ob["font"] = quoteString("arial-bold-r-14.0")
+    ob.Properties["buttonLabel"] = quoteString(text)
+    ob.Properties["numCmds"] = 1
+    ob.Properties["command"] = {0: quoteString(command)}
+    ob.Properties["fgColor"] = ob.Properties.Colour["Related display"]
+    ob.Properties["bgColor"] = ob.Properties.Colour["Canvas"]
+    ob.Properties["font"] = quoteString("arial-bold-r-14.0")
     ob.setShadows()
     return ob
 
@@ -320,15 +320,15 @@ def rd_visible(
     ob = EdmObject("Related Display")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["buttonLabel"] = quoteString(text)
-    ob["numPvs"] = 4
-    ob["numDsps"] = 1
-    ob["displayFileName"] = {0: quoteString(filename)}
+    ob.Properties["buttonLabel"] = quoteString(text)
+    ob.Properties["numPvs"] = 4
+    ob.Properties["numDsps"] = 1
+    ob.Properties["displayFileName"] = {0: quoteString(filename)}
     if symbols:
-        ob["symbols"] = {0: quoteString(symbols)}
-    ob["fgColor"] = ob.Colour["Related display"]
-    ob["bgColor"] = ob.Colour["Canvas"]
-    ob["font"] = quoteString("arial-bold-r-14.0")
+        ob.Properties["symbols"] = {0: quoteString(symbols)}
+    ob.Properties["fgColor"] = ob.Properties.Colour["Related display"]
+    ob.Properties["bgColor"] = ob.Properties.Colour["Canvas"]
+    ob.Properties["font"] = quoteString("arial-bold-r-14.0")
     ob.setShadows()
     return ob
 
@@ -365,19 +365,19 @@ def symbol(
     ob = EdmObject("Symbol")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["file"] = quoteString(filename)
-    ob["truthTable"] = truth
-    ob["numStates"] = nstates
+    ob.Properties["file"] = quoteString(filename)
+    ob.Properties["truthTable"] = truth
+    ob.Properties["numStates"] = nstates
     mindict, maxdict = {}, {}
     for i in range(1, nstates):
         if i > 1:
             mindict[i] = i - 1
         maxdict[i] = i
-    ob["minValues"] = mindict
-    ob["maxValues"] = maxdict
-    ob["controlPvs"] = {0: quoteString(pv)}
-    ob["numPvs"] = 1
-    ob["useOriginalColors"] = True
+    ob.Properties["minValues"] = mindict
+    ob.Properties["maxValues"] = maxdict
+    ob.Properties["controlPvs"] = {0: quoteString(pv)}
+    ob.Properties["numPvs"] = 1
+    ob.Properties["useOriginalColors"] = True
     return ob
 
 
@@ -400,30 +400,32 @@ def raised_circle(x: int, y: int, w: int, h: int, ta: str = "CO") -> EdmObject:
     top_shadow = EdmObject("Circle")
     top_shadow.setDimensions(w - 2, h - 1)
     top_shadow.setPosition(x, y)
-    top_shadow["lineColor"] = top_shadow.Colour["Top Shadow"]
-    top_shadow["lineWidth"] = 2
+    top_shadow.Properties["lineColor"] = top_shadow.Properties.Colour["Top Shadow"]
+    top_shadow.Properties["lineWidth"] = 2
     group.addObject(top_shadow)
     bottom_shadow = EdmObject("Circle")
     bottom_shadow.setDimensions(w - 2, h - 1)
     bottom_shadow.setPosition(x + 2, y + 2)
-    bottom_shadow["lineColor"] = bottom_shadow.Colour["Bottom Shadow"]
-    bottom_shadow["lineWidth"] = 2
+    bottom_shadow.Properties["lineColor"] = bottom_shadow.Properties.Colour[
+        "Bottom Shadow"
+    ]
+    bottom_shadow.Properties["lineWidth"] = 2
     group.addObject(bottom_shadow)
     base = EdmObject("Circle")
     base.setDimensions(w - 3, h - 3)
     base.setPosition(x + 2, y + 2)
-    base["lineColor"] = base.Colour[ta + " help"]
-    base["fillColor"] = base.Colour[ta + " title"]
-    base["lineWidth"] = 3
-    base["fill"] = True
+    base.Properties["lineColor"] = base.Properties.Colour[ta + " help"]
+    base.Properties["fillColor"] = base.Properties.Colour[ta + " title"]
+    base.Properties["lineWidth"] = 3
+    base.Properties["fill"] = True
     group.addObject(base)
     sparkle = EdmObject("Circle")
     sparkle.setDimensions(4, 3)
     sparkle.setPosition(x + 12, y + 6)
-    sparkle["lineColor"] = sparkle.Colour["Top Shadow"]
-    sparkle["fillColor"] = sparkle.Colour["White"]
-    sparkle["lineWidth"] = 2
-    sparkle["fill"] = True
+    sparkle.Properties["lineColor"] = sparkle.Properties.Colour["Top Shadow"]
+    sparkle.Properties["fillColor"] = sparkle.Properties.Colour["White"]
+    sparkle.Properties["lineWidth"] = 2
+    sparkle.Properties["fill"] = True
     group.addObject(sparkle)
     group.setPosition(x, y, move_objects=False)
     group.setDimensions(w, h, resize_objects=False)
@@ -461,8 +463,8 @@ def raised_text_circle(
     """
     group = raised_circle(x, y, w, h, ta)
     text_label = label(x, y, w, h, text)
-    text_label["fontAlign"] = quoteString(fontAlign)
-    text_label["font"] = quoteString(font)
+    text_label.Properties["fontAlign"] = quoteString(fontAlign)
+    text_label.Properties["font"] = quoteString(font)
     group.addObject(text_label)
     return group
 
@@ -530,8 +532,8 @@ def raised_text_button_circle(
     """
     group = raised_button_circle(x, y, w, h, filename, symbols, ta)
     text_label = label(x, y, w, h, text)
-    text_label["fontAlign"] = quoteString(fontAlign)
-    text_label["font"] = quoteString(font)
+    text_label.Properties["fontAlign"] = quoteString(fontAlign)
+    text_label.Properties["font"] = quoteString(font)
     group.addObject(text_label)
     return group
 
@@ -557,8 +559,8 @@ def raised_PV_circle(
     """
     group = raised_circle(x, y, w, h, ta)
     PV = text_monitor(x, y, w, h, pv)
-    PV["font"] = quoteString("arial-bold-r-14.0")
-    PV["fontAlign"] = quoteString("center")
+    PV.Properties["font"] = quoteString("arial-bold-r-14.0")
+    PV.Properties["fontAlign"] = quoteString("center")
     group.addObject(PV)
     return group
 
@@ -652,13 +654,13 @@ def embed(
     ob = EdmObject("Embedded Window")
     ob.setPosition(x, y)
     ob.setDimensions(w, h)
-    ob["displaySource"] = quoteString("menu")
-    ob["filePv"] = quoteString(r"LOC\dummy=i:0")
-    ob["numDsps"] = 1
-    ob["displayFileName"] = {0: quoteString(filename)}
+    ob.Properties["displaySource"] = quoteString("menu")
+    ob.Properties["filePv"] = quoteString(r"LOC\dummy=i:0")
+    ob.Properties["numDsps"] = 1
+    ob.Properties["displayFileName"] = {0: quoteString(filename)}
     if symbols:
-        ob["symbols"] = {0: quoteString(symbols)}
-    ob["noScroll"] = True
+        ob.Properties["symbols"] = {0: quoteString(symbols)}
+    ob.Properties["noScroll"] = True
     return ob
 
 
@@ -677,12 +679,12 @@ def exit_button(x: int, y: int, w: int, h: int) -> EdmObject:
     button = EdmObject("Exit Button")
     button.setPosition(x, y)
     button.setDimensions(w, h)
-    button["fgColor"] = button.Colour["Exit/Quit/Kill"]
-    button["bgColor"] = button.Colour["Canvas"]
+    button.Properties["fgColor"] = button.Properties.Colour["Exit/Quit/Kill"]
+    button.Properties["bgColor"] = button.Properties.Colour["Canvas"]
     button.setShadows()
-    button["label"] = quoteString("EXIT")
-    button["font"] = quoteString("arial-medium-r-16.0")
-    button["3d"] = True
+    button.Properties["label"] = quoteString("EXIT")
+    button.Properties["font"] = quoteString("arial-medium-r-16.0")
+    button.Properties["3d"] = True
     return button
 
 
@@ -697,10 +699,10 @@ def lines(points: Collection[Tuple[int, int]], col: str = "Black") -> EdmObject:
         EdmObject: EdmObject class of lines object
     """
     ob = EdmObject("Lines")
-    ob["lineColor"] = ob.Colour[col]
-    ob["numPoints"] = len(points)
-    ob["xPoints"] = dict((i, x) for i, (x, y) in enumerate(points))
-    ob["yPoints"] = dict((i, y) for i, (x, y) in enumerate(points))
+    ob.Properties["lineColor"] = ob.Properties.Colour[col]
+    ob.Properties["numPoints"] = len(points)
+    ob.Properties["xPoints"] = dict((i, x) for i, (x, y) in enumerate(points))
+    ob.Properties["yPoints"] = dict((i, y) for i, (x, y) in enumerate(points))
     ob.autofitDimensions()
     return ob
 
@@ -719,7 +721,7 @@ def arrow(x0: int, x1: int, y0: int, y1: int, col: str = "Black") -> EdmObject:
         EdmObject: EdmObject class of arrow
     """
     ob = lines([(x0, y0), (x1, y1)], col)
-    ob["arrows"] = quoteString("to")
+    ob.Properties["arrows"] = quoteString("to")
     return ob
 
 
@@ -747,14 +749,14 @@ def component_symbol(
     ob = EdmObject("Symbol")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob["file"] = quoteString(filename)
-    ob["numStates"] = 5
-    ob["minValues"] = {0: 6, 1: 0, 2: 2, 3: 4, 4: 1}
-    ob["maxValues"] = {0: 8, 1: 1, 2: 4, 3: 6, 4: 2}
-    ob["controlPvs"] = {0: quoteString(StatusPv), 1: quoteString(SevrPv)}
-    ob["numPvs"] = 2
-    ob["shiftCount"] = {1: 1}
-    ob["useOriginalColors"] = True
+    ob.Properties["file"] = quoteString(filename)
+    ob.Properties["numStates"] = 5
+    ob.Properties["minValues"] = {0: 6, 1: 0, 2: 2, 3: 4, 4: 1}
+    ob.Properties["maxValues"] = {0: 8, 1: 1, 2: 4, 3: 6, 4: 2}
+    ob.Properties["controlPvs"] = {0: quoteString(StatusPv), 1: quoteString(SevrPv)}
+    ob.Properties["numPvs"] = 2
+    ob.Properties["shiftCount"] = {1: 1}
+    ob.Properties["useOriginalColors"] = True
     return ob
 
 
@@ -798,17 +800,17 @@ def colour_changing_rd(
     else:
         obgroup.addObject(shell_visible(x, y, w, h, "", filename))
     obtext = label(x + 2, y + 2, w - 4, h - 4, name, fontAlign="center")
-    obtext["font"] = quoteString("arial-bold-r-14.0")
-    obtext["fgColor"] = obtext.Colour["Related display"]
-    obtext["bgAlarm"] = True
-    obtext["alarmPv"] = quoteString(SevrPv)
-    obtext["visPv"] = quoteString(StatusPv)
-    obtext["visMin"] = quoteString("1")
-    obtext["visMax"] = quoteString("2")
-    obtext["useDisplayBg"] = False
+    obtext.Properties["font"] = quoteString("arial-bold-r-14.0")
+    obtext.Properties["fgColor"] = obtext.Properties.Colour["Related display"]
+    obtext.Properties["bgAlarm"] = True
+    obtext.Properties["alarmPv"] = quoteString(SevrPv)
+    obtext.Properties["visPv"] = quoteString(StatusPv)
+    obtext.Properties["visMin"] = quoteString("1")
+    obtext.Properties["visMax"] = quoteString("2")
+    obtext.Properties["useDisplayBg"] = False
     obtext2 = obtext.copy()
-    obtext["visInvert"] = True
-    obtext2["bgColor"] = obtext.Colour["Monitor: NORMAL"]
+    obtext.Properties["visInvert"] = True
+    obtext2.Properties["bgColor"] = obtext.Properties.Colour["Monitor: NORMAL"]
     obgroup.addObject(obtext)
     obgroup.addObject(obtext2)
     obgroup.autofitDimensions()
@@ -828,33 +830,33 @@ def flip_axis(direction: str):
     group = EdmObject("Group")
     if direction == "left":
         zlab = label(50, 50, 10, 20, "Z", "center")
-        zlab["font"] = quoteString("arial-bold-r-14.0")
+        zlab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(zlab)
         z = arrow(5, 45, 60, 60, "grey-13")
         group.addObject(z)
         y = arrow(5, 5, 60, 20, "grey-13")
         group.addObject(y)
         ylab = label(0, 0, 10, 16, "Y", "center")
-        ylab["font"] = quoteString("arial-bold-r-14.0")
+        ylab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(ylab)
         xlab = label(40, 20, 77, 32, "X (into \n    screen)", "center")
-        xlab["font"] = quoteString("arial-bold-r-14.0")
+        xlab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(xlab)
         x = arrow(5, 35, 60, 45, "Black")
         group.addObject(x)
     else:
         zlab = label(5, 25, 10, 15, "Z", "center")
-        zlab["font"] = quoteString("arial-bold-r-14.0")
+        zlab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(zlab)
         z = arrow(40, 0, 45, 45, "Black")
         group.addObject(z)
         y = arrow(40, 40, 45, 5, "Black")
         group.addObject(y)
         ylab = label(15, 0, 20, 20, "Y", "center")
-        ylab["font"] = quoteString("arial-bold-r-14.0")
+        ylab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(ylab)
         xlab = label(50, 30, 69, 32, "X (out of  \n   screen)", "center")
-        xlab["font"] = quoteString("arial-bold-r-14.0")
+        xlab.Properties["font"] = quoteString("arial-bold-r-14.0")
         group.addObject(xlab)
         x = arrow(40, 70, 45, 65, "grey-13")
         group.addObject(x)

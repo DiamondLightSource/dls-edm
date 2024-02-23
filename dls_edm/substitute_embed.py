@@ -2,15 +2,16 @@
 
 Saves as <output_screen_filename>
 """
+import argparse
 import os
 import re
 from optparse import OptionParser
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-from .edmObject import EdmObject, quoteString
+from edmObject import EdmObject, quoteString
 
-author = "Tom Cobb"
-usage = """%prog [options] <input_screen_filename> <output_screen_filename>"""
+author = "Oliver Copping"
 
 
 class Substitute_embed:
@@ -42,26 +43,28 @@ class Substitute_embed:
             ungroup (bool, optional): Flag to determine if embedded screens should be
                 ungrouped. Defaults to False.
         """
-        self.ungroup = ungroup
-        self.screen = screen
-        self.paths = paths
-        self.dict = dict_
+        self.ungroup: bool = ungroup
+        self.screen: EdmObject = screen
+        self.paths: List[Path] = [Path(path_) for path_ in paths]
+        self.dict: Dict[str, int] = dict_
         self.additional_macros: Dict = {}
-        self.counter = 0
+        self.counter: int = 0
         outsiders = self.__substitute_recurse(self.screen)
         # combine off screen menu muxes and menu mux pvs
-        menu_muxes = []
-        menu_mux_pvs = []
+        menu_muxes: List[EdmObject] = []
+        menu_mux_pvs: List[EdmObject] = []
         screen_w, screen_h = self.screen.getDimensions()
         for ob in outsiders:
-            assert isinstance(ob["numItems"], str)
-            if ob.Type in ["Menu Mux", "Menu Mux PV"] and not (
-                "numItems" in ob and ob["numItems"] and int(ob["numItems"]) > 1
+            assert isinstance(ob.Properties["numItems"], str)
+            if ob.Properties.Type in ["Menu Mux", "Menu Mux PV"] and not (
+                "numItems" in ob.Properties
+                and ob.Properties["numItems"]
+                and int(ob.Properties["numItems"]) > 1
             ):
                 # combine menu muxes and menu mux pvs if they have only 1 state
                 x, y = ob.getPosition()
                 if x > screen_w or y > screen_h:
-                    if ob.Type == "Menu Mux":
+                    if ob.Properties.Type == "Menu Mux":
                         menu_muxes.append(ob)
                     else:
                         menu_mux_pvs.append(ob)
@@ -70,7 +73,7 @@ class Substitute_embed:
             else:
                 self.screen.addObject(ob)
         for t, l in [("Menu Mux", menu_muxes), ("Menu Mux PV", menu_mux_pvs)]:
-            mux = EdmObject(t)
+            mux: EdmObject = EdmObject(t)
             for ob in l:
                 symbols = [
                     o
@@ -79,10 +82,10 @@ class Substitute_embed:
                 ]
                 symbol_max_num = int(max(symbols)[-1])
                 if symbol_max_num > 3 or f"symbol{3 - symbol_max_num}" in mux:
-                    screen.addObject(mux)
+                    self.screen.addObject(mux)
                     mux = EdmObject(t)
-                mux["numItems"] = 1
-                mux["symbolTag"] = {0: quoteString(".")}
+                mux.Properties["numItems"] = 1
+                mux.Properties["symbolTag"] = {0: quoteString(".")}
                 x, y = ob.getPosition()
                 mux.setPosition(x, y)
                 w, h = ob.getDimensions()
@@ -93,35 +96,40 @@ class Substitute_embed:
                         while True:
                             if key not in mux:
                                 macro = getattr(ob["symbol" + str(i)], "0")
-                                mux[key] = {0: macro}
+                                mux.Properties[key] = {0: macro}
                                 for z in [f"PV{i}", f"value{i}"]:
                                     if z in ob:
-                                        mux[z[:-1] + key[-1]] = {0: getattr(ob[z], "0")}
+                                        mux.Properties[z[:-1] + key[-1]] = {
+                                            0: getattr(ob[z], "0")
+                                        }
                                 break
                             else:
                                 key = key[:-1] + str(int(key[-1]) + 1)
-            if "symbol0" in mux:
-                screen.addObject(mux)
+            if "symbol0" in mux.Properties:
+                self.screen.addObject(mux)
 
     def __substitute_recurse(self, root: EdmObject) -> List[EdmObject]:
         """Recursive substitute call."""
-        outsiders = []
+        outsiders: List[EdmObject] = []
         for ob in root.flatten():
-            if ob.Type == "Embedded Window":
+            if ob.Properties.Type == "Embedded Window":
                 check = self.__check_embed(ob)
                 if check == "replace":
-                    assert isinstance(ob["displayFileName"], Dict)
-                    i = max(ob["displayFileName"].keys())
-                    macros = {}
-                    assert isinstance(ob["symbols"], List)
-                    for sub in ob["symbols"][i].split(","):
-                        macro = [x.strip() for x in sub.strip('"').split("=")]
-                        if len(macro) == 2:
-                            macros[macro[0]] = macro[1]
-                    group, new_outsiders = self.__group_from_screen(
-                        ob["displayFileName"][i], macros
-                    )
-                    if group:
+                    assert isinstance(ob.Properties["displayFileName"], Dict)
+                    i = max(ob.Properties["displayFileName"].keys())
+                    macros: Dict[str, str] = {}
+                    group: EdmObject | None = None
+                    new_outsiders: List[EdmObject] | None = None
+                    if "symbols" in ob.Properties:
+                        assert isinstance(ob.Properties["symbols"], Dict)
+                        for sub in ob.Properties["symbols"][i].split(","):
+                            macro = [x.strip() for x in sub.strip('"').split("=")]
+                            if len(macro) == 2:
+                                macros[macro[0]] = macro[1]
+                        group, new_outsiders = self.__group_from_screen(
+                            ob.Properties["displayFileName"][i], macros
+                        )
+                    if group is not None and new_outsiders is not None:
                         assert isinstance(group, EdmObject)
                         assert isinstance(new_outsiders, List)
                         for new_ob in [group] + new_outsiders:
@@ -163,13 +171,14 @@ class Substitute_embed:
             screen = self.in_screens[filename].copy()
         else:
             paths = [
-                os.path.join(p, filename)
+                p.joinpath(filename)
                 for p in self.paths
-                if os.path.isfile(os.path.join(p, filename))
+                if p.joinpath(filename).is_file()
             ]
             if paths:
                 screen = EdmObject("Screen")
-                screen.write(open(paths[0], "r").read())
+                with open(paths[0], "r") as f:
+                    screen.write(f.read())
                 self.in_screens[filename] = screen.copy()
             else:
                 return (None, None)
@@ -199,7 +208,7 @@ class Substitute_embed:
         by $(P):INFO:N<VAR> return replace if it needs to be replaced, remove to remove
         and nothing to do nothing
         """
-        filePv = ob["filePv"]
+        filePv = ob.Properties["filePv"]
         assert isinstance(filePv, str)
         if "dummy" in filePv:
             return "replace"
@@ -218,32 +227,38 @@ class Substitute_embed:
                         return "remove"
             return "nothing"
 
+    def get_substituted_screen(self) -> EdmObject:
+        return self.screen
+
 
 def cl_substitute_embed():
     """Command line helper function for substitute embed."""
-    parser = OptionParser(usage)
+    parser = argparse.ArgumentParser(prog="substitute_embed")  # , usage=usage)
+    parser.add_argument("screen", nargs=1, type=Path)
+    parser.add_argument("substituted_screen", nargs=1, type=Path)
     paths = "."
-    parser.add_option(
+    parser.add_argument(
         "-p",
-        "--paths",
+        # "--paths",
         dest="paths",
         metavar="COLON_SEPARATED_LIST",
-        help="Set the list of paths to look for the embedded "
-        + "screens. Default is "
-        + paths,
+        help=f"Set the list of paths to look for the embedded screens. Default is {paths}",
     )
-    (options, args) = parser.parse_args()
-    if len(args) != 2:
-        parser.error("Incorrect number of arguments")
-    if options.paths:
-        paths = options.paths
-    paths = paths.split(":")
-    screen = EdmObject("Screen")
-    screen.write(open(args[0], "r").read())
-    Substitute_embed(screen, paths)
-    open(args[1], "w").write(screen.read())
+    args = parser.parse_args()
+    if args.paths:
+        paths = args.paths.split(":")
+
+    screen = EdmObject("Screen", defaults=False)
+    with open(args.screen[0], "r") as f:
+        screen.write(f.read())
+
+    assert isinstance(paths, List)
+    sub = Substitute_embed(screen, paths)
+    new_screen = sub.get_substituted_screen()
+    with open(args.substituted_screen[0], "w") as f:
+        f.write(new_screen.read())
     print(
-        "Embedded windows substituted in " + args[0] + ", output written to " + args[1]
+        f"Embedded windows substituted in {args.screen[0]}, output written to {args.substituted_screen[0]}"
     )
 
 

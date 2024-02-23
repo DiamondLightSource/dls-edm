@@ -5,6 +5,7 @@
 """dls.edm - Module containing a python representation of an edm object."""
 from . import common  # noqa: F401
 from .edmObject import EdmObject, quoteListString, quoteString  # noqa: F401
+from .edmProperties import EdmProperties  # noqa: F401
 from .edmTable import EdmTable  # noqa: F401
 from .flip_horizontal import Flip_horizontal  # noqa: F401
 from .generic import Generic  # noqa: F401
@@ -18,6 +19,7 @@ from .vacuum import Vacuum  # noqa: F401
 __all__ = []
 
 __all__.extend(["EdmObject", "quoteString", "quoteListString"])
+__all__.extend(["EdmProperties"])
 __all__.extend(["EdmTable"])
 __all__.extend(["Titlebar"])
 __all__.extend(["Resize"])
