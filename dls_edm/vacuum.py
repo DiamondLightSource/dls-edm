@@ -1,5 +1,6 @@
 """Takes a signal list and creates the vacuum synoptic from the _GUI_VA sheet."""
 
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from .common import dummy, label, rd, rectangle, symbol, text_monitor, tooltip
@@ -58,7 +59,7 @@ def gaugeRd(
     Returns:
         EdmObject: _description_
     """
-    ob = rd(x, y, w, h, "mks937aGauge.edl", f"dom=$(dom), id={GID}")
+    ob = rd(x, y, w, h, Path("mks937aGauge.edl"), f"dom=$(dom), id={GID}")
     assert isinstance(ob.Properties["displayFileName"], Dict)
     ob.Properties["displayFileName"][1] = quoteString("mks937a.edl")
     assert isinstance(ob.Properties["symbols"], Dict)
@@ -71,7 +72,7 @@ def Vacuum(
     row_dicts: List[Dict[str, str]],
     title: str = "BLxxI-VA",
     domain: Optional[str] = None,
-    flipped_paths: Optional[List[str]] = None,
+    flipped_paths: Optional[List[Path]] = None,
 ) -> EdmObject:
     """Create a vacuum screen from a row_dicts.
 
@@ -99,7 +100,7 @@ def Vacuum(
         title (str, optional): Screen title. Defaults to "BLxxI-VA".
         domain (Optional[str], optional): The beamline domain, e.g. BLxxI.
             Defaults to None.
-        flipped_paths (Optional[List[str]], optional): List of paths to flipped symbols.
+        flipped_paths (Optional[List[Path]], optional): List of paths to flipped symbols.
             Defaults to None.
 
     Returns:
@@ -147,17 +148,25 @@ def Vacuum(
                             0,
                             16,
                             32,
-                            "symbols-vacuum-aperture-symbol.edl",
+                            Path("symbols-vacuum-aperture-symbol.edl"),
                             r"LOC\\dummy0=i:0",
                             2,
                         )
                     )
                 else:
                     ob.addObject(tooltip(0, 0, 16, 32, "Valve: " + VALVE))
-                    ob.addObject(rd(0, 0, 16, 32, "vacuumValve.edl", "device=" + VALVE))
+                    ob.addObject(
+                        rd(0, 0, 16, 32, Path("vacuumValve.edl"), "device=" + VALVE)
+                    )
                     ob.addObject(
                         symbol(
-                            0, 0, 16, 32, "vacuumValve-symbol.edl", VALVE + ":STA", 6
+                            0,
+                            0,
+                            16,
+                            32,
+                            Path("vacuumValve-symbol.edl"),
+                            VALVE + ":STA",
+                            6,
                         )
                     )
                 # a space symbol will be added later
@@ -183,9 +192,9 @@ def Vacuum(
             RGA = dict["RGA"]
             ob = EdmObject("Group")
             ob.addObject(tooltip(0, 0, 32, 32, "Residual Gas Analyser: " + RGA))
-            ob.addObject(rd(0, 0, 32, 32, "rga.edl", "device=" + PREFIX + RGA))
+            ob.addObject(rd(0, 0, 32, 32, Path("rga.edl"), "device=" + PREFIX + RGA))
             ob.addObject(
-                symbol(0, 0, 32, 32, "rga-symbol.edl", PREFIX + RGA + ":STA", 11)
+                symbol(0, 0, 32, 32, Path("rga-symbol.edl"), PREFIX + RGA + ":STA", 11)
             )
             ob.addObject(label(36, 0, 60, 16, RGA, fontAlign=align))
             table.addObject(ob)
@@ -205,7 +214,13 @@ def Vacuum(
             ob.addObject(gaugeRd(0, 0, 32, 32, PREFIX, GID, GCTLR))
             ob.addObject(
                 symbol(
-                    0, 0, 32, 32, "mks937aPirg-symbol.edl", PREFIX + PIRG + ":STA", 17
+                    0,
+                    0,
+                    32,
+                    32,
+                    Path("mks937aPirg-symbol.edl"),
+                    PREFIX + PIRG + ":STA",
+                    17,
                 )
             )
             ob.addObject(label(36, 0, 60, 16, PIRG, fontAlign=align))
@@ -222,7 +237,15 @@ def Vacuum(
             ob.addObject(tooltip(0, 0, 32, 32, "Inverted Magnetron Gauge: " + IMG))
             ob.addObject(gaugeRd(0, 0, 32, 32, PREFIX, GID, GCTLR))
             ob.addObject(
-                symbol(0, 0, 32, 32, "mks937aImg-symbol.edl", PREFIX + IMG + ":STA", 17)
+                symbol(
+                    0,
+                    0,
+                    32,
+                    32,
+                    Path("mks937aImg-symbol.edl"),
+                    PREFIX + IMG + ":STA",
+                    17,
+                )
             )
             ob.addObject(label(36, 0, 60, 16, IMG, fontAlign=align))
             ob.addObject(pressure(36, 16, 60, 16, PREFIX + IMG + ":P", fontAlign=align))
@@ -241,7 +264,14 @@ def Vacuum(
             ob = EdmObject("Group")
             ob.addObject(tooltip(0, 0, 32, 32, "Ion Pump: " + IONP))
             ob.addObject(
-                rd(0, 0, 32, 32, "digitelMpcIonpControl.edl", "device=" + PREFIX + IONP)
+                rd(
+                    0,
+                    0,
+                    32,
+                    32,
+                    Path("digitelMpcIonpControl.edl"),
+                    "device=" + PREFIX + IONP,
+                )
             )
             ob.addObject(
                 symbol(
@@ -249,7 +279,7 @@ def Vacuum(
                     0,
                     32,
                     32,
-                    "digitelMpcIonp-symbol.edl",
+                    Path("digitelMpcIonp-symbol.edl"),
                     PREFIX + IONP + ":STA",
                     10,
                 )
@@ -342,7 +372,7 @@ def Vacuum(
                 ob1y + int(ob1h / 2 - 4),
                 ob2x - ob1x - ob1w - 4,
                 8,
-                "space.edl",
+                Path("space.edl"),
                 "device=" + PREFIX + text,
             )
         )
@@ -352,7 +382,7 @@ def Vacuum(
                 ob1y + int(ob1h / 2 - 4),
                 ob2x - ob1x - ob1w,
                 8,
-                "symbols-vacuum-symbol.edl",
+                Path("symbols-vacuum-symbol.edl"),
                 PREFIX + text + ":STA",
                 3,
                 True,
@@ -389,7 +419,7 @@ def Vacuum(
     screen.Properties["title"] = quoteString(title.split(".")[0])
     if flipped_paths is not None:
         screen = Flip_horizontal(screen, flipped_paths, flip_group_contents=True)
-    Titlebar(
+    screen = Titlebar(
         screen,
         ta="VA",
         button="text",

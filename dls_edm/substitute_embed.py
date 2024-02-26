@@ -23,7 +23,7 @@ class Substitute_embed:
     substitute. additional_macros are then substituted in this screen.
     """
 
-    in_screens: Dict = {}
+    in_screens: Dict[Path, EdmObject] = {}
 
     def __init__(
         self,
@@ -152,13 +152,26 @@ class Substitute_embed:
                         print(f"Object {ob} has no parent object.\n{e}")
         return outsiders
 
+    def _write_in_screens(self, filename: Path) -> EdmObject | None:
+        paths = [
+            p.joinpath(filename) for p in self.paths if p.joinpath(filename).is_file()
+        ]
+        if paths:
+            screen = EdmObject("Screen")
+            with open(paths[0], "r") as f:
+                screen.write(f.read())
+            self.in_screens[filename] = screen.copy()
+            return screen
+        else:
+            return None
+
     def __group_from_screen(
-        self, filename: str, macros: Dict[str, str]
+        self, filename: Path, macros: Dict[str, str]
     ) -> Union[Tuple[EdmObject, List[EdmObject]], Tuple[None, None]]:
         """Create a group from a screen given by the filename.
 
         Args:
-            filename (str): Filename of screen
+            filename (Path): Filename of screen
             macros (Dict[str, str]): Macros for screen
 
         Returns:
@@ -166,22 +179,18 @@ class Substitute_embed:
             Group of EdmObject and a list of the outsider EdmObjects.
         """
         #
-        filename = filename.strip('"').replace(".edl", "") + ".edl"
+        filename = (
+            filename.rename(f"{filename}.edl")
+            if not str(filename).endswith(".edl")
+            else filename
+        )
         if filename in self.in_screens:
             screen = self.in_screens[filename].copy()
         else:
-            paths = [
-                p.joinpath(filename)
-                for p in self.paths
-                if p.joinpath(filename).is_file()
-            ]
-            if paths:
-                screen = EdmObject("Screen")
-                with open(paths[0], "r") as f:
-                    screen.write(f.read())
-                self.in_screens[filename] = screen.copy()
-            else:
+            screen = self._write_in_screens(filename)
+            if screen is None:
                 return (None, None)
+
         outsiders = []
         screen_w, screen_h = screen.getDimensions()
         group = EdmObject("Group")

@@ -1,29 +1,29 @@
 """GuiBuilder generator script."""
+import argparse
 import os
 import re
 import sys
 from copy import copy
 from math import sqrt
-from optparse import OptionParser
+from pathlib import Path
 from typing import Dict, Generator, List, Optional, Tuple, TypedDict, Union
 from xml.dom import minidom
 from xml.dom.minidom import Element
 
+from common import colour_changing_rd, embed, label, lines
+from edmObject import EdmObject, quoteString
+from edmTable import EdmTable
+from flip_horizontal import Flip_horizontal
+from generic import Generic
+from substitute_embed import Substitute_embed
+from titlebar import Titlebar
 from typing_extensions import Unpack, assert_type
-
-from .common import colour_changing_rd, embed, label, lines
-from .edmObject import EdmObject, quoteString
-from .edmTable import EdmTable
-from .flip_horizontal import Flip_horizontal
-from .generic import Generic
-from .substitute_embed import Substitute_embed
-from .titlebar import Titlebar
 
 
 class ScreenOptions(TypedDict):
     """TypedDict for Screen arguments."""
 
-    filename: str
+    filename: Path
     macros: str
     embedded: bool
     tab: bool
@@ -85,7 +85,7 @@ class GBObject(object):
         """Add screen to GuiBuilder object.
 
         Args:
-            filename (str): File name of the screen to add.
+            filename (Path): File name of the screen to add.
             macros (str, optional): String of macros for the screen. Defaults to "".
             embedded (bool, optional): Flag to determine if the screen is embedded.
                 Defaults to False.
@@ -115,7 +115,8 @@ class GBObject(object):
             for k, v in [x.split("=") for x in macros.split(",") if x]:
                 self.macrodict[k.strip()] = v.strip()
             self.macrodict["NAME"] = self.name
-            self.macrodict["FILE"] = os.path.basename(filename)
+            assert isinstance(filename, Path)
+            self.macrodict["FILE"] = str(filename)
             self.macrodict["EDM_MACROS"] = macros
 
     def addShell(self, command: str) -> None:
@@ -140,12 +141,12 @@ class GBObject(object):
 class GBScreen(object):
     """GuiBuilder screen object."""
 
-    filename: str
+    filename: Path
     macros: str
     embedded: bool
     tab: bool
 
-    def __init__(self, filename: str, macros: str, embedded: bool, tab: bool) -> None:
+    def __init__(self, filename: Path, macros: str, embedded: bool, tab: bool) -> None:
         """Guibuilder screen constructor."""
         self.__dict__.update(locals())
 
@@ -191,31 +192,33 @@ class GuiBuilder:
         self.dom = dom
         self.errors = errors
         # initialise paths
-        self.paths: List[str] = []
-        self.devpaths: List[str] = []
-        self.RELEASE = ""
+        self.paths: List[Path] = []
+        self.devpaths: List[Path] = []
+        self.RELEASE: Path = Path()
         # initialise record text
         self.dbtext = ""
 
     def parseArgs(self):
         """Parse the args of the Guibuilder class."""
         # first parse the args
-        parser = OptionParser(
-            "%prog [options] <BLxxI-gui.xml> <RELEASE>\n"
-            "Builds gui files by parsing xml file"
+        parser = argparse.ArgumentParser(
+            prog="GuiBuilder", description="Builds gui files by parsing xml file"
         )
-        parser.add_option(
+        parser.add_argument("xml", nargs=1, type=Path)
+        parser.add_argument("release", nargs=1, type=Path)
+        parser.add_argument(
             "--db", dest="db", default="", help="Write status records to this db file"
         )
-        (options, args) = parser.parse_args()
-        if len(args) != 2:
-            parser.error("Invalid number of arguments, run with -h to see usage")
-        # store options
-        self.db = options.db
-        self.parseRelease(os.path.abspath(args[1]))
-        self.parseXml(args[0])
+        args = parser.parse_args()
 
-    def parseRelease(self, RELEASE: str) -> None:
+        # "%prog [options] <BLxxI-gui.xml> <RELEASE>\n"
+
+        # store options
+        self.db = args.db
+        self.parseRelease(Path.absolute(args.release))
+        self.parseXml(args.xml)
+
+    def parseRelease(self, RELEASE: Path) -> None:
         """Parse the release tree.
 
         Args:
@@ -226,15 +229,19 @@ class GuiBuilder:
         from dls_dependency_tree import dependency_tree
 
         self.RELEASE = RELEASE
-        tree = dependency_tree(None, self.RELEASE)
+        tree = dependency_tree(None, str(self.RELEASE))
         if "BLGui" not in [x.name for x in tree.leaves]:
-            prefix = os.path.join(tree.e.prodArea(), "BLGui")
-            p = os.path.join(prefix, tree.e.sortReleases(os.listdir(prefix))[-1])
-            tree.leaves.append(dependency_tree(tree, module_path=p))
-        self.paths = tree.paths()
-        self.devpaths = tree.paths(["/*App/op*/edl", "/*App/op*/symbol"])
+            prefix = Path(tree.e.prodArea()).joinpath("BLGui")
+            p = prefix.joinpath(
+                tree.e.sortReleases([str(p) for p in prefix.iterdir()])[-1]
+            )
+            tree.leaves.append(dependency_tree(tree, module_path=str(p)))
+        self.paths = [Path(p) for p in tree.paths()]
+        self.devpaths = [
+            Path(p) for p in tree.paths(["/*App/op*/edl", "/*App/op*/symbol"])
+        ]
 
-    def parseXml(self, xml: str) -> None:
+    def parseXml(self, xml: Path) -> None:
         """Parse xml of Guibuilder object.
 
         Args:
@@ -242,7 +249,7 @@ class GuiBuilder:
         """
         self.xml = xml
         # open the xml file
-        xml_root: minidom.Document = minidom.parse(self.xml)
+        xml_root: minidom.Document = minidom.parse(str(self.xml))
         # find the root node
         c_node: Element = self._elements(xml_root)[0]
         # populate them from our elements
@@ -257,7 +264,7 @@ class GuiBuilder:
                 typ = str(ob.nodeName)
                 if typ in ["edm", "edmembed", "edmtab"]:
                     args: ScreenOptions = {
-                        "filename": "",
+                        "filename": Path(),
                         "macros": "",
                         "embedded": False,
                         "tab": False,
@@ -270,7 +277,7 @@ class GuiBuilder:
                     for k, v in list(ob.attributes.items()):
                         assert k in ["filename", "macros"]
                         if k == "filenane":
-                            args["filename"] = str(v)
+                            args["filename"] = Path(v)
                         elif k == "macros":
                             args["macros"] = str(v)
                     gob.addScreen(**args)
@@ -356,7 +363,7 @@ class GuiBuilder:
         desc: str = "",
         P: str = "",
         obs: List[GBObject] = [],
-        filename: Optional[str] = None,
+        filename: Optional[Path] = None,
         macrodict: Optional[Dict] = None,
         preferEmbed: bool = True,
         preferTab: bool = True,
@@ -377,7 +384,7 @@ class GuiBuilder:
             desc (str, optional): Description of object. Defaults to "".
             P (str, optional): Prefix of object. Defaults to "".
             obs (List[GBObject], optional): List of child objects. Defaults to [].
-            filename (Optional[str], optional): Screen filename. Defaults to None.
+            filename (Optional[Path], optional): Screen filename. Defaults to None.
             macrodict (Optional[Dict], optional): Dictionary of macros.
                 Defaults to None.
             preferEmbed (bool, optional): Flag to determine if the screen should
@@ -410,25 +417,25 @@ class GuiBuilder:
             self.__writeRecord(ob, obs)
 
         # if we are not given a filename, we should make a screen for it
-        macros = ",".join("%s=%s" % x for x in list(macrodict.items()))
+        macros = ",".join(f"{k}={v}" for k, v in list(macrodict.items()))
         if filename is None and obs:
-            filename = d + "/" + name + ".edl"
+            filename = Path(f"{d}/{name}.edl")
             if self.errors:
-                print("Creating screen for %s" % name)
+                print(f"Creating screen for {name}")
             screenobs = self.__screenObs(name, obs, preferEmbed, preferTab)
             if screenobs:
                 # only one display which is not embedded, so just add launch this screen
                 if (
                     len(screenobs) == 1
-                    and screenobs[0].Type == "Group"
-                    and screenobs[0].Objects[0].Type == "Related Display"
+                    and screenobs[0].Properties.Type == "Group"
+                    and screenobs[0].Objects[0].Properties.Type == "Related Display"
                 ):
                     screenob = screenobs[0].Objects[0]
-                    screenob_filename = screenob["displayFileName"]
+                    screenob_filename = screenob.Properties["displayFileName"]
                     assert isinstance(screenob_filename, Dict)
                     filename = screenob_filename[0].strip('"')
-                    if "symbols" in list(screenobs[0].Objects[0].keys()):
-                        screenob_macros = screenob["symbols"]
+                    if "symbols" in screenob.Properties:
+                        screenob_macros = screenob.Properties["symbols"]
                         assert isinstance(screenob_macros, Dict)
                         macros = screenob_macros[0].strip('"')
                     else:
@@ -445,7 +452,9 @@ class GuiBuilder:
                         title="Device - %s" % name,
                     )
                     if substituteEmbed:
-                        Substitute_embed(screen, [], {}, ungroup=True)
+                        screen = Substitute_embed(
+                            screen, [], {}, ungroup=True
+                        ).get_substituted_screen()
                     open(filename, "w").write(screen.read())
             else:
                 filename = None
@@ -537,7 +546,7 @@ class GuiBuilder:
                         20,
                         name=label,
                         edl=True,
-                        filename=os.path.basename(rd.filename),
+                        filename=rd.filename,
                         symbols=rd.macros,
                         **args,
                     )
@@ -551,7 +560,7 @@ class GuiBuilder:
                     0,
                     0,
                     0,
-                    os.path.basename(filename),
+                    filename,
                     ",".join([e.macros, "label=" + label]),
                 )
                 eob.setDimensions(
@@ -563,7 +572,7 @@ class GuiBuilder:
                 filename = e.filename
                 self.__load_screen(filename)
                 w, h = Substitute_embed.in_screens[filename].getDimensions()
-                tabobs.append((label, os.path.basename(filename), e.macros, w, h))
+                tabobs.append((label, str(filename), e.macros, w, h))
         if tabobs:
             grp = EdmObject("Group")
             buttons = EdmObject("Choice Button")
@@ -571,13 +580,13 @@ class GuiBuilder:
             maxh = max([x[4] for x in tabobs])
             labs = ",".join(["0"] + [x[0] for x in tabobs])
             pv = r"LOC\$(!W)tab"
-            buttons["controlPv"] = quoteString("%s=e:%s" % (pv, labs))
+            buttons.Properties["controlPv"] = quoteString("%s=e:%s" % (pv, labs))
             buttons.setPosition(4, 3)
             buttons.setDimensions(maxw + 1, 25)
-            buttons["orientation"] = quoteString("horizontal")
-            buttons["font"] = quoteString("arial-bold-r-12.0")
+            buttons.Properties["orientation"] = quoteString("horizontal")
+            buttons.Properties["font"] = quoteString("arial-bold-r-12.0")
             buttons.setShadows()
-            buttons["selectColor"] = buttons.Colour["Button: On"]
+            buttons.Properties["selectColor"] = buttons.Properties.Colour["Button: On"]
             grp.addObject(buttons)
             grp.addObject(
                 lines(
@@ -592,14 +601,14 @@ class GuiBuilder:
             eob = EdmObject("Embedded Window")
             eob.setPosition(5, 29)
             eob.setDimensions(maxw, maxh)
-            eob["filePv"] = quoteString(pv)
-            eob["noScroll"] = True
-            eob["numDsps"] = len(tabobs)
-            eob["displaySource"] = quoteString("menu")
-            eob["displayFileName"] = dict(
+            eob.Properties["filePv"] = quoteString(pv)
+            eob.Properties["noScroll"] = True
+            eob.Properties["numDsps"] = len(tabobs)
+            eob.Properties["displaySource"] = quoteString("menu")
+            eob.Properties["displayFileName"] = dict(
                 (i, quoteString(x[1])) for (i, x) in enumerate(tabobs)
             )
-            eob["symbols"] = dict(
+            eob.Properties["symbols"] = dict(
                 (i, quoteString(",".join([x[2], "label=" + x[0]])))
                 for (i, x) in enumerate(tabobs)
             )
@@ -608,14 +617,14 @@ class GuiBuilder:
             out.append(grp)
         return out
 
-    def __load_screen(self, filename: str) -> None:
+    def __load_screen(self, filename: Path) -> None:
         if filename not in Substitute_embed.in_screens:
             paths = [
-                os.path.join(p, filename)
+                p.joinpath(filename)
                 for p in self.paths
-                if os.path.isfile(os.path.join(p, filename))
+                if p.joinpath(filename).is_file()
             ]
-            assert paths, "Cannot find file %s in paths %s" % (filename, self.paths)
+            assert paths, f"Cannot find file {filename} in paths {self.paths}"
             screen = EdmObject("Screen")
             screen.write(open(paths[0], "r").read())
             Substitute_embed.in_screens[filename] = screen.copy()
@@ -625,9 +634,9 @@ class GuiBuilder:
 
     def __filter_screens(
         self,
-        filename: str,
+        filename: Path,
         obs: List[GBObject],
-        destFilename: Optional[str] = None,
+        destFilename: Optional[Path] = None,
         embedded: Optional[bool] = None,
     ) -> Tuple[List[GBObject], bool]:
         # return a list of objects with screens filtered and modified for
@@ -653,7 +662,7 @@ class GuiBuilder:
         return objects, embedded
 
     def makeList(
-        self, srcFiles: List[str], dstFiles: List[str], group: GBObject
+        self, srcFiles: List[Path], dstFiles: List[Path], group: GBObject
     ) -> Tuple[List[GBObject], bool]:
         """Make a list of GuiBuilder objects.
 
@@ -679,8 +688,8 @@ class GuiBuilder:
     def multiFileSummary(
         self,
         typ: str,
-        srcFiles: List[str],
-        dstFiles: Optional[List[str]] = None,
+        srcFiles: List[Path],
+        dstFiles: Optional[List[Path]] = None,
         embedded: Optional[bool] = None,
         group: bool = True,
         groupByName: bool = False,
@@ -709,7 +718,7 @@ class GuiBuilder:
             dstFiles = []
             assert isinstance(dstFiles, List)
             for i in range(len(srcFiles)):
-                dstFiles.append("")
+                dstFiles.append(Path())
         else:
             assert len(dstFiles) == len(
                 srcFiles
@@ -738,7 +747,7 @@ class GuiBuilder:
                 sobs = self.__screenObs(o.name, objects, embedded)
                 buttons = self.__screenObs("", [o], preferEmbed=False, preferTab=False)
 
-                sobs_width = sobs[-1]["w"]
+                sobs_width = sobs[-1].Properties["w"]
                 if not isinstance(sobs_width, int):
                     if isinstance(sobs_width, str) and sobs_width.isdigit():
                         sobs_width = int(sobs_width)
@@ -759,15 +768,15 @@ class GuiBuilder:
             nrows = int(sqrt(numobs * w / (aspectRatio * h)) + 1)
             for oblist in screen_objects:
                 # if entire component doesn't fit in column, create a new one
-                assert isinstance(table["__def_y"], int)
-                if len(oblist) + table["__def_y"] > nrows:
+                assert isinstance(table.Properties["__def_y"], int)
+                if len(oblist) + table.Properties["__def_y"] > nrows:
                     table.nextCol()
                 for ob in oblist:
                     table.addObject(ob)
                     table.nextCell(max_y=nrows)
             screen.autofitDimensions()
             table.ungroup()
-            Titlebar(
+            screen = Titlebar(
                 screen,
                 button="text",
                 button_text=self.dom,
@@ -776,14 +785,14 @@ class GuiBuilder:
                 tooltip="generic-tooltip",
                 title=headerText,
             )
-            Substitute_embed(screen, [], {})
+            screen = Substitute_embed(screen, [], {}).get_substituted_screen()
         open(filename, "w").write(screen.read())
 
     def summary(
         self,
         typ: str,
-        srcFilename: str,
-        destFilename: Optional[str] = None,
+        srcFilename: Path,
+        destFilename: Optional[Path] = None,
         embedded: Optional[bool] = None,
         group: bool = True,
         groupByName: bool = False,
@@ -810,9 +819,9 @@ class GuiBuilder:
             extras (List[GBObject], optional): List of extra objects. Defaults to [].
         """
         # this is the filename of the generated screen
-        filename = self.__safe_filename(self.dom + "-" + typ.lower() + ".edl")
+        filename = self.__safe_filename(f"{self.dom}-{typ.lower()}.edl")
         if self.errors:
-            print("Creating %s" % filename)
+            print(f"Creating {filename}")
         # this is the filename for each object put on screens
         if destFilename is None:
             destFilename = srcFilename
@@ -820,7 +829,7 @@ class GuiBuilder:
         screen = EdmObject("Screen")
         table = EdmTable(yborder=5)
         screen.addObject(table)
-        headerText = "%s Summary" % typ
+        headerText = f"{typ} Summary"
         # objects is a list of list of screen objects to add
         screen_objects = []
         if group:
@@ -856,7 +865,7 @@ class GuiBuilder:
                         "", [o], preferEmbed=False, preferTab=False
                     )
 
-                    sobs_width = sobs[-1]["w"]
+                    sobs_width = sobs[-1].Properties["w"]
                     if not isinstance(sobs_width, int):
                         if isinstance(sobs_width, str) and sobs_width.isdigit():
                             sobs_width = int(sobs_width)
@@ -887,8 +896,8 @@ class GuiBuilder:
             assert isinstance(scrObs_width, int)
 
             for s in sobs:
-                assert isinstance(s["h"], int)
-                s.setDimensions(scrObs_width, s["h"])
+                assert isinstance(s.Properties["h"], int)
+                s.setDimensions(scrObs_width, s.Properties["h"])
             screen_objects.append(sobs)
         if screen_objects:
             w, h = screen_objects[0][-1].getDimensions()
@@ -896,15 +905,15 @@ class GuiBuilder:
             nrows = int(sqrt(numobs * w / (ar * h)) + 1)
             for oblist in screen_objects:
                 # if entire component doesn't fit in column, create a new one
-                assert isinstance(table["__def_y"], int)
-                if len(oblist) + table["__def_y"] > nrows:
+                assert isinstance(table.Properties["__def_y"], int)
+                if len(oblist) + table.Properties["__def_y"] > nrows:
                     table.nextCol()
                 for ob in oblist:
                     table.addObject(ob)
                     table.nextCell(max_y=nrows)
             screen.autofitDimensions()
             table.ungroup()
-            Titlebar(
+            screen = Titlebar(
                 screen,
                 button="text",
                 button_text=self.dom,
@@ -913,7 +922,7 @@ class GuiBuilder:
                 tooltip="generic-tooltip",
                 title=headerText,
             )
-            Substitute_embed(screen, [], {})
+            screen = Substitute_embed(screen, [], {}).get_substituted_screen()
         open(filename, "w").write(screen.read())
 
     def __concat(self, obj_list_gen: Generator[List[GBRecord], None, None]) -> List:
@@ -923,8 +932,8 @@ class GuiBuilder:
         """Create a motor homed summary <dom>-motor-homed.edl."""
         self.summary(
             "Motor Homed",
-            "motor.edl",
-            "motor-embed-homed.edl",
+            Path("motor.edl"),
+            Path("motor-embed-homed.edl"),
             embedded=True,
             groupByName=True,
         )
@@ -932,7 +941,7 @@ class GuiBuilder:
     def interlockSummary(self):
         """Create an interlock summary <dom>-interlocks.edl."""
         self.summary(
-            "Interlocks", "interlock-embed-small.edl", group=False, embedded=True
+            "Interlocks", Path("interlock-embed-small.edl"), group=False, embedded=True
         )
 
     def temperatureSummary(self, bms: bool = True):
@@ -951,7 +960,7 @@ class GuiBuilder:
                 ob = self.object("%s BMS" % desc)
 
                 args: ScreenOptions = {
-                    "filename": f"DLS_dev{id}.edl",
+                    "filename": Path(f"DLS_dev{id}.edl"),
                     "macros": "",
                     "embedded": False,
                     "tab": False,
@@ -959,12 +968,12 @@ class GuiBuilder:
                 ob.addScreen(**args)
                 extras.append(ob)
         self.summary(
-            "Temperatures", "temperature-embed.edl", embedded=True, extras=extras
+            "Temperatures", Path("temperature-embed.edl"), embedded=True, extras=extras
         )
 
     def flowSummary(self):
         """Create an interlock summary <dom>-interlocks.edl."""
-        self.summary("Water Flows", "flow-embed.edl", embedded=True)
+        self.summary("Water Flows", Path("flow-embed.edl"), embedded=True)
 
     def autofilled(self, screen: Union[str, EdmObject]) -> EdmObject:
         """Return an autofilled version of screen.
@@ -990,11 +999,11 @@ class GuiBuilder:
             screen.write(open(filename).read())
         # now autofill all groups in the screens
         assert isinstance(screen, EdmObject)
-        groups = [ob for ob in screen.Objects if ob.Type == "Group"]
+        groups = [ob for ob in screen.Objects if ob.Properties.Type == "Group"]
         for group in groups:
             # the vis PV is checked for tags
             if hasattr(group, "visPv"):
-                visPv = group["visPv"]
+                visPv = group.Properties["visPv"]
                 assert isinstance(visPv, str)
                 visPv = visPv.strip('"')
             else:
@@ -1043,14 +1052,16 @@ class GuiBuilder:
         if type(screen) == str:
             filename = screen
             screen = EdmObject("Screen")
-            screen.write(open(filename).read())
+            with open(filename, "w") as f:
+                screen.write(f.read())
         assert isinstance(screen, EdmObject)
         return Flip_horizontal(screen, self.paths)
 
     def writeScreen(self, screen: EdmObject, filename: str):
         """Write screen object screen to filename."""
         filename = self.__safe_filename(filename)
-        open(filename, "w").write(screen.read())
+        with open(filename, "w") as f:
+            f.write(screen.read())
 
     def __writeCalc(self, name: str, **args):
         """Write a calc record."""

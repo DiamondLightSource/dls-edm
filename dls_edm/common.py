@@ -1,5 +1,6 @@
 """Module containing some useful EdmObjects for building dls screens."""
 
+from pathlib import Path
 from typing import Collection, Optional, Tuple
 
 from edmObject import EdmObject, quoteListString, quoteString
@@ -206,7 +207,7 @@ def tooltip(x: int, y: int, w: int, h: int, text: str) -> EdmObject:
     return ob
 
 
-def rd(x: int, y: int, w: int, h: int, filename: str, symbols: str) -> EdmObject:
+def rd(x: int, y: int, w: int, h: int, filename: Path, symbols: str) -> EdmObject:
     """Return an invisible related display with position (x,y) dimensions (w,h).
 
     filename and symbols as defined.
@@ -229,7 +230,7 @@ def rd(x: int, y: int, w: int, h: int, filename: str, symbols: str) -> EdmObject
     ob.Properties["buttonLabel"] = quoteString("device screen")
     ob.Properties["numPvs"] = 4
     if filename:
-        ob.Properties["displayFileName"] = {0: quoteString(filename)}
+        ob.Properties["displayFileName"] = {0: quoteString(str(filename))}
         ob.Properties["numDsps"] = 1
         if symbols:
             ob.Properties["symbols"] = {0: quoteString(symbols)}
@@ -298,7 +299,7 @@ def rd_visible(
     w: int,
     h: int,
     text: str,
-    filename: str,
+    filename: Path,
     symbols: Optional[str] = None,
 ):
     """Return an visible related display with position (x,y) dimensions (w,h).
@@ -323,7 +324,7 @@ def rd_visible(
     ob.Properties["buttonLabel"] = quoteString(text)
     ob.Properties["numPvs"] = 4
     ob.Properties["numDsps"] = 1
-    ob.Properties["displayFileName"] = {0: quoteString(filename)}
+    ob.Properties["displayFileName"] = {0: quoteString(str(filename))}
     if symbols:
         ob.Properties["symbols"] = {0: quoteString(symbols)}
     ob.Properties["fgColor"] = ob.Properties.Colour["Related display"]
@@ -338,7 +339,7 @@ def symbol(
     y: int,
     w: int,
     h: int,
-    filename: str,
+    filename: Path,
     pv: str,
     nstates: int,
     truth: bool = False,
@@ -365,7 +366,7 @@ def symbol(
     ob = EdmObject("Symbol")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob.Properties["file"] = quoteString(filename)
+    ob.Properties["file"] = quoteString(str(filename))
     ob.Properties["truthTable"] = truth
     ob.Properties["numStates"] = nstates
     mindict, maxdict = {}, {}
@@ -470,7 +471,7 @@ def raised_text_circle(
 
 
 def raised_button_circle(
-    x: int, y: int, w: int, h: int, filename: str, symbols: str, ta: str = "CO"
+    x: int, y: int, w: int, h: int, filename: Path, symbols: str, ta: str = "CO"
 ) -> EdmObject:
     """Return a 3d look circular button.
 
@@ -503,7 +504,7 @@ def raised_text_button_circle(
     w: int,
     h: int,
     text: str,
-    filename: str,
+    filename: Path,
     symbols: str,
     font: str = "arial-bold-r-14.0",
     fontAlign: str = "center",
@@ -571,7 +572,7 @@ def raised_PV_button_circle(
     w: int,
     h: int,
     pv: str,
-    filename: str = "generic-help",
+    filename: Path = Path("generic-help"),
     symbols: str = "draw=$(P).png",
     ta: str = "CO",
 ) -> EdmObject:
@@ -634,7 +635,7 @@ def raised_PV_shell_circle(
 
 
 def embed(
-    x: int, y: int, w: int, h: int, filename: str, symbols: Optional[str] = None
+    x: int, y: int, w: int, h: int, filename: Path, symbols: Optional[str] = None
 ) -> EdmObject:
     """Return an embedded window.
 
@@ -657,7 +658,7 @@ def embed(
     ob.Properties["displaySource"] = quoteString("menu")
     ob.Properties["filePv"] = quoteString(r"LOC\dummy=i:0")
     ob.Properties["numDsps"] = 1
-    ob.Properties["displayFileName"] = {0: quoteString(filename)}
+    ob.Properties["displayFileName"] = {0: quoteString(str(filename))}
     if symbols:
         ob.Properties["symbols"] = {0: quoteString(symbols)}
     ob.Properties["noScroll"] = True
@@ -726,7 +727,7 @@ def arrow(x0: int, x1: int, y0: int, y1: int, col: str = "Black") -> EdmObject:
 
 
 def component_symbol(
-    x: int, y: int, w: int, h: int, StatusPv: str, SevrPv: str, filename: str
+    x: int, y: int, w: int, h: int, StatusPv: str, SevrPv: str, filename: Path
 ) -> EdmObject:
     """Return a component symbol with position (x,y) dimensions (w,h).
 
@@ -749,7 +750,7 @@ def component_symbol(
     ob = EdmObject("Symbol")
     ob.setDimensions(w, h)
     ob.setPosition(x, y)
-    ob.Properties["file"] = quoteString(filename)
+    ob.Properties["file"] = quoteString(str(filename))
     ob.Properties["numStates"] = 5
     ob.Properties["minValues"] = {0: 6, 1: 0, 2: 2, 3: 4, 4: 1}
     ob.Properties["maxValues"] = {0: 8, 1: 1, 2: 4, 3: 6, 4: 2}
@@ -768,7 +769,7 @@ def colour_changing_rd(
     name: str,
     StatusPv: str,
     SevrPv: str,
-    filename: str,
+    filename: Path,
     symbols: str = "",
     edl: bool = True,
 ) -> EdmObject:
@@ -798,7 +799,7 @@ def colour_changing_rd(
     if edl:
         obgroup.addObject(rd_visible(x, y, w, h, "", filename, symbols))
     else:
-        obgroup.addObject(shell_visible(x, y, w, h, "", filename))
+        obgroup.addObject(shell_visible(x, y, w, h, "", str(filename)))
     obtext = label(x + 2, y + 2, w - 4, h - 4, name, fontAlign="center")
     obtext.Properties["font"] = quoteString("arial-bold-r-14.0")
     obtext.Properties["fgColor"] = obtext.Properties.Colour["Related display"]

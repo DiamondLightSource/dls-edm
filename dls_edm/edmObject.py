@@ -106,6 +106,7 @@ class EdmObject:
             EdmObject: A python representation of an Edm Object.
         """
         # print("Copy, type:", self.Properties.Type)
+        assert self.Properties.Type is not None
         new_ob: EdmObject = EdmObject(self.Properties.Type, defaults=False)
         # need to explicitly copy some properties
         for k, v in self.Properties.items():
@@ -268,21 +269,21 @@ class EdmObject:
         # internal function to export values of filter_keys if they exist
         lines = []
         # key_set is the set of all property keys
-        keys = list(self.Properties.keys())
+        keys = self.Properties.keys()
         key_set = set(keys)
         # filter_set is the set of keys to filter against
         filter_set = set(filter_keys)
         # if we need to assert that all keys in filter_keys exist, do so here
         if assert_existence:
-            assert filter_set <= key_set, "Some required keys not defined: " + str(
-                list(filter_set - key_set)
-            )
+            assert (
+                filter_set <= key_set
+            ), f"Some required keys not defined: {list(filter_set - key_set)}"
         # Make sure related displays with no filenames have the right numDsps
         if self.Properties.Type == "Related Display":
             tmp = self.Properties["displayFileName"]
             assert isinstance(tmp, Dict)
             if (
-                "displayFileName" in list(self.Properties.keys())
+                "displayFileName" in self.Properties.keys()
                 and len(tmp.keys()) == 1
                 and tmp[list(tmp.keys())[0]] == '""'
             ):
@@ -649,11 +650,11 @@ class EdmObject:
             and "xPoints" in self.Properties
             and self.Properties["xPoints"]
         ):
-            for point in list(self.Properties["xPoints"].keys()):
+            for point in self.Properties["xPoints"]:
                 self.Properties["xPoints"][point] = str(
                     self.toint(self.Properties["xPoints"][point]) + deltax
                 )
-            for point in list(self.Properties["yPoints"].keys()):
+            for point in self.Properties["yPoints"]:
                 self.Properties["yPoints"][point] = str(
                     self.toint(self.Properties["yPoints"][point]) + deltay
                 )
