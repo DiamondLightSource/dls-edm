@@ -1,9 +1,14 @@
-"""Module containing some useful EdmObjects for building dls screens."""
+"""
+Module containing some useful EdmObjects for building dls screens.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
 
 from pathlib import Path
 from typing import Collection, Optional, Tuple
 
-from edmObject import EdmObject, quoteListString, quoteString
+from .edmObject import EdmObject, quoteListString, quoteString
 
 __all__ = [
     "arrow",

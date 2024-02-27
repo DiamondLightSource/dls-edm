@@ -1,17 +1,17 @@
-"""Substitutes all embedded windows for their contents in a screen.
+"""
+Substitutes all embedded windows for their contents in a screen.
 
 Saves as <output_screen_filename>
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
 """
 import argparse
-import os
 import re
-from optparse import OptionParser
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
-from edmObject import EdmObject, quoteString
-
-author = "Oliver Copping"
+from .edmObject import EdmObject, quoteString
 
 
 class Substitute_embed:

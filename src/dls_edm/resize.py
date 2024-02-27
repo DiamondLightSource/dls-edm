@@ -1,17 +1,17 @@
-"""This script resizes an edm screen <input_screen> to size (<width>,<height>).
+"""
+This script resizes an edm screen <input_screen> to size (<width>,<height>).
 
 It also resizes fonts, then prints the resulting screen to <output_screen>
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
 """
 
 import argparse
-from optparse import OptionParser
 from pathlib import Path
 from typing import List
 
-from edmObject import EdmObject
-
-author = "Tom Cobb"
-usage = """%prog [options] <input_screen> <output_screen> <width> <height>"""
+from .edmObject import EdmObject
 
 
 def new_font_size(factor: float, font: str) -> str:

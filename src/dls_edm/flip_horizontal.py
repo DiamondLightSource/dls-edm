@@ -2,16 +2,17 @@
 This script takes an edm screen and flips it horizontally, keeping groups intact.
 
 It also replaces symbols and images with their flipped counterparts if they exist.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
 """
 import argparse
 import os
 from pathlib import Path
 from typing import Dict, List
 
-from common import flip_axis
-from edmObject import EdmObject, quoteString
-
-author = "Oliver Copping"
+from .common import flip_axis
+from .edmObject import EdmObject, quoteString
 
 
 def Flip_horizontal(

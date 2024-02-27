@@ -1,13 +1,12 @@
 """
-A python representation of an edm object with associated useful functions.
+A python representation of edm object properties with associated useful functions.
 
-Author: Tom Cobb
-Updated to Python3 by: Oliver Copping
+Author: Oliver Copping
 """
 
 from typing import Dict, ItemsView, KeysView, List, ValuesView
 
-from utils import get_colour_dict, get_properties_dict
+from .utils import get_colour_dict, get_properties_dict
 
 
 class EdmProperties:
@@ -28,9 +27,9 @@ class EdmProperties:
         self.Colour: Dict[str, str] = get_colour_dict()
         self._properties: Dict[str, str | bool | int | List[str] | Dict] = {}
         if defaults:
-            self.setProperties()  # use_defaults=self.use_defaults)
+            self.setProperties()
 
-    def setProperties(self) -> None:  # , use_defaults: bool = True):
+    def setProperties(self) -> None:
         """
         Set EdmObject Properties.
 

@@ -1,20 +1,32 @@
-import pickle
+"""
+Some util functions for EdmObjects and EdmProperties.
+
+Author: Oliver Copping
+"""
 from pathlib import Path
 from typing import Dict, List
+
+import dill
 
 
 def get_properties_dict() -> Dict[str, str | bool | int | List[str] | Dict]:
     PROPERTIES: Dict[str, str | bool | int | List[str] | Dict] = {}
+
     # code to load the stored dictionaries
     try:
         file_path = Path.absolute(Path(__file__).parent)  # + "/helper.pkl")
         file_path = file_path.joinpath("properties_helper.pkl")
+
         with open(file_path, "rb") as file:
-            pkl = pickle.load(file)
+            # try:
+            #     import dls_edm.edmProperties
+            # except ModuleNotFoundError as e:
+            #     raise ModuleNotFoundError("Could not import edmProperties.\n", e)
+
+            pkl = dill.load(file)
         PROPERTIES = pkl
     except IOError as e:
         print(f"IOError: \n{e}")
-        PROPERTIES = {}
 
     return PROPERTIES
 
@@ -27,7 +39,7 @@ def get_colour_dict() -> Dict[str, str]:
         file_path = file_path.joinpath("colour_helper.pkl")
         if file_path.is_file():
             with open(file_path, "rb") as file:
-                pkl = pickle.load(file)
+                pkl = dill.load(file)
             COLOUR = pkl
         else:
             COLOUR = write_colour_helper()
@@ -70,7 +82,7 @@ def write_colour_helper() -> Dict[str, str]:
         colour_pkl_file = file_path.joinpath(Path("colour_helper.pkl"))
         colour_pkl_file.touch()
         with colour_pkl_file.open("wb") as f:
-            pickle.dump(COLOUR, f, 0)
+            dill.dump(COLOUR, f, 0)
     except IOError as e:
         print(f"IOError: \n{e}")
         COLOUR = {}

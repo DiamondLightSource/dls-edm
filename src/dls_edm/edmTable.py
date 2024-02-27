@@ -2,13 +2,14 @@
 EdmTable, a virtual EdmObject.
 
 It can expand and contract as neccessary, resizing its components.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
 """
 
 from typing import Dict, List, Optional, Tuple, Union
 
-from edmObject import EdmObject
-
-author = "Tom Cobb"
+from .edmObject import EdmObject
 
 
 class EdmTable(EdmObject):

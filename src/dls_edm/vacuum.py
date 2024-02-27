@@ -1,4 +1,9 @@
-"""Takes a signal list and creates the vacuum synoptic from the _GUI_VA sheet."""
+"""
+Takes a signal list and creates the vacuum synoptic from the _GUI_VA sheet.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
 
 from pathlib import Path
 from typing import Dict, List, Optional

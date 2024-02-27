@@ -1,15 +1,20 @@
-"""Adds a titlebar and exit button to the screen."""
+"""
+Adds a titlebar and exit button to the screen.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
 import argparse
 from pathlib import Path
 
-from common import (
+from .common import (
     exit_button,
     raised_PV_button_circle,
     raised_PV_circle,
     raised_PV_shell_circle,
     raised_text_circle,
 )
-from edmObject import EdmObject, quoteListString, quoteString
+from .edmObject import EdmObject, quoteListString, quoteString
 
 author = "Oliver Copping"
 

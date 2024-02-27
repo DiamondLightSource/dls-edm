@@ -1,4 +1,9 @@
-"""GuiBuilder generator script."""
+"""
+GuiBuilder generator script.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
 import argparse
 import os
 import re
@@ -10,14 +15,15 @@ from typing import Dict, Generator, List, Optional, Tuple, TypedDict, Union
 from xml.dom import minidom
 from xml.dom.minidom import Element
 
-from common import colour_changing_rd, embed, label, lines
-from edmObject import EdmObject, quoteString
-from edmTable import EdmTable
-from flip_horizontal import Flip_horizontal
-from generic import Generic
-from substitute_embed import Substitute_embed
-from titlebar import Titlebar
 from typing_extensions import Unpack, assert_type
+
+from .common import colour_changing_rd, embed, label, lines
+from .edmObject import EdmObject, quoteString
+from .edmTable import EdmTable
+from .flip_horizontal import Flip_horizontal
+from .generic import Generic
+from .substitute_embed import Substitute_embed
+from .titlebar import Titlebar
 
 
 class ScreenOptions(TypedDict):
@@ -214,9 +220,9 @@ class GuiBuilder:
         # "%prog [options] <BLxxI-gui.xml> <RELEASE>\n"
 
         # store options
-        self.db = args.db
-        self.parseRelease(Path.absolute(args.release))
-        self.parseXml(args.xml)
+        self.db = args.db[0]
+        self.parseRelease(Path.absolute(args.release[0]))
+        self.parseXml(args.xml[0])
 
     def parseRelease(self, RELEASE: Path) -> None:
         """Parse the release tree.

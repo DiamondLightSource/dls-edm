@@ -1,10 +1,15 @@
-"""Generates an edm summary screen for temps, waterflows & motors given a table_dict."""
+"""
+Generates an edm summary screen for temps, waterflows & motors given a table_dict.
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
+"""
 from typing import Dict, List
 
-from common import can_optimise, embed, label, rd, rd_visible, shell_visible, tooltip
-from edmObject import EdmObject, quoteString
-from edmTable import EdmTable
-from titlebar import Titlebar
+from .common import can_optimise, embed, label, rd, rd_visible, shell_visible, tooltip
+from .edmObject import EdmObject, quoteString
+from .edmTable import EdmTable
+from .titlebar import Titlebar
 
 
 def Summary(

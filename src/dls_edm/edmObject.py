@@ -7,13 +7,14 @@ Updated to Python3 by: Oliver Copping
 
 import codecs
 import os
-import pickle
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from edmProperties import EdmProperties
-from utils import write_colour_helper
+import dill
+
+from .edmProperties import EdmProperties
+from .utils import write_colour_helper
 
 ignore_list = [
     "4 0 1",
@@ -759,7 +760,7 @@ def write_helper() -> None:
 
     Helper function that imports every edm object available and for each object
     builds a dict of default properties. It also builds a dict of colour names
-    to indexes. It then pickles these dictionaries, writing them to file. When
+    to indexes. It then dills these dictionaries, writing them to file. When
     EdmObject in imported again, these dictionaries are read and imported, and
     used to provide some sensible options for a default object.
     """
@@ -868,7 +869,7 @@ def write_helper() -> None:
     prop_pkl_file.touch()
     with prop_pkl_file.open("wb") as f:
         # print(PROPERTIES)
-        pickle.dump(PROPERTIES, f, 0)
+        dill.dump(PROPERTIES, f, 0)
     print("Done")
 
 

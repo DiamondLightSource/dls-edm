@@ -9,12 +9,15 @@ following algorithm:
 - Fill it with obs
 - If there are any spaces left then make a smaller EdmTable and iterate
 - Tile the large layouts to fit aspect ratio
+
+Author: Tom Cobb
+Updated to Python3 by: Oliver Copping
 """
 import math
 from typing import Dict, List, Optional, Tuple
 
-from edmObject import EdmObject  # edm screen object
-from edmTable import EdmTable  # edm table object
+from .edmObject import EdmObject
+from .edmTable import EdmTable
 
 
 # Return xborder, yborder for level of tiler
