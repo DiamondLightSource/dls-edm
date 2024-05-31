@@ -4,11 +4,14 @@
 #include <stdio.h>
 #include <crawler.h>
 
+#define BUILD_DIR
+
 // replacement implementation of crawlEdlFiles, run with
 // env LD_PRELOAD=./act_save.so edm -crawl dummy.edl
 // constructs all widgets and saves to allwidgets.edl
 
-static char *filename = "%s/allwidgets1.edl", BUILD_DIR;
+// static char *filepath = "%#s", BUILD_DIR;
+static char *filename = BUILD_DIR + "allwidgets.edl";
 
 int crawlEdlFiles(appContextClass *appCtx, crawlListPtr listHead)
 {

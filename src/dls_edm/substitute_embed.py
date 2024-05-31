@@ -111,7 +111,7 @@ class Substitute_embed:
     def __substitute_recurse(self, root: EdmObject) -> List[EdmObject]:
         """Recursive substitute call."""
         outsiders: List[EdmObject] = []
-        for ob in root.flatten():
+        for ob in root.flatten(include_groups=True):
             if ob.Properties.Type == "Embedded Window":
                 check = self.__check_embed(ob)
                 if check == "replace":

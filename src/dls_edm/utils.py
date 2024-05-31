@@ -17,13 +17,9 @@ def get_properties_dict() -> Dict[str, str | bool | int | List[str] | Dict]:
         file_path = Path.absolute(Path(__file__).parent)  # + "/helper.pkl")
         file_path = file_path.joinpath("properties_helper.pkl")
 
-        with open(file_path, "rb") as file:
-            # try:
-            #     import dls_edm.edmProperties
-            # except ModuleNotFoundError as e:
-            #     raise ModuleNotFoundError("Could not import edmProperties.\n", e)
+        with open(file_path, "rb") as _file:
 
-            pkl = dill.load(file)
+            pkl = dill.load(_file, ignore=True)
         PROPERTIES = pkl
     except IOError as e:
         print(f"IOError: \n{e}")
@@ -38,8 +34,8 @@ def get_colour_dict() -> Dict[str, str]:
         file_path = Path.absolute(Path(__file__).parent)  # + "/helper.pkl")
         file_path = file_path.joinpath("colour_helper.pkl")
         if file_path.is_file():
-            with open(file_path, "rb") as file:
-                pkl = dill.load(file)
+            with open(file_path, "rb") as _file:
+                pkl = dill.load(_file, ignore=True)
             COLOUR = pkl
         else:
             COLOUR = write_colour_helper()

@@ -42,26 +42,35 @@ class EdmProperties:
         """
         default_dict: Dict[str, str | bool | int | List[str] | Dict]
 
+        assert self.Type is not None
+
         PROPERTIES = get_properties_dict()
 
         if PROPERTIES:
             try:
-                # if use_defaults:
-                assert self.Type is not None
                 default_dict = PROPERTIES[self.Type]  # type: ignore
                 self._properties.update(default_dict)
-                # for key, value in default_dict.items():
-                #     setattr(self._properties, key, value)
-            # else:
-            #     self._properties = {}
+                return
             except Exception as e:
                 print(
                     f"Exception caught when attempting to set default properties:\n {e}"
                 )
 
+        if self.Type != "Screen":
+            self["object"] = "active" + self.Type.replace(" ", "") + "Class"
+        # If PROPERTIES isn't defined, set some sensible values
+        self["major"], self["minor"], self["release"] = (4, 0, 0)
+        self["x"], self["y"], self["w"], self["h"] = (0, 0, 100, 100)
+
     # def getProperty(self, property_key: str) -> str | bool | int | List[str] | Dict:
     def __getitem__(self, property_key: str) -> str | bool | int | List[str] | Dict:
-        return self._properties[property_key]
+        if property_key == "displayFileName" and property_key not in self._properties:
+            return {"displayFileName": ""}
+        else:
+            assert (
+                property_key in self._properties
+            ), f"---------------\n{self.Type}, '{property_key}'\n{self._properties}"
+            return self._properties[property_key]
 
     # def setProperty(
     #     self, property_key: str, value: str | bool | int | List[str] | Dict

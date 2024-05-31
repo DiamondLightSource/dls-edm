@@ -4,6 +4,7 @@ GuiBuilder generator script.
 Author: Tom Cobb
 Updated to Python3 by: Oliver Copping
 """
+
 import argparse
 import os
 import re
@@ -82,11 +83,11 @@ class GBObject(object):
 
     def addScreen(
         self,
-        # filename: str,
-        # macros: str = "",
-        # embedded: bool = False,
-        # tab: bool = False,
-        **kwargs: Unpack[ScreenOptions],
+        filename: str,
+        macros: str = "",
+        embedded: bool = False,
+        tab: bool = False,
+        # **kwargs: Unpack[ScreenOptions],
     ) -> None:
         """Add screen to GuiBuilder object.
 
@@ -98,15 +99,26 @@ class GBObject(object):
             tab (bool, optional): Flag to determine if there are tab widgets.
                 Defaults to False.
         """
-        assert_type(kwargs, ScreenOptions)
+        # assert_type(kwargs, ScreenOptions)
+
+        # kws: ScreenOptions = {
+        #     "filename": Path(),
+        #     "macros": "",
+        #     "embedded": False,
+        #     "tab": False,
+        # }
 
         # From https://stackoverflow.com/a/65965731
         # In Python 3.12 this probably won't be needed due to PEP 692
-        def kwargs_get(d, *k):
-            for i in k:
-                yield d[i]
+        # def kwargs_get(d, *k):
+        #     print(d, k)
+        #     for i in k:
+        #         # yield d[i]
+        #         kws[i] = d[i]
 
-        filename, macros, embedded, tab = kwargs_get(kwargs, *kwargs)
+        # kwargs_get(kwargs, *kwargs)
+
+        # filename, macros, embedded, tab = kws.values()
 
         macros = macros.replace(",undefined)", ")").rstrip("\r")
         mdict = {}
@@ -115,14 +127,15 @@ class GBObject(object):
             if not v.strip():
                 v = "''"
             mdict[k.strip()] = v.strip()
-        macros = ",".join(["%s=%s" % x for x in list(mdict.items())])
+        macros = ",".join([f"{k}={v}" for k, v in mdict.items()])
         self.screens.append(GBScreen(filename, macros, embedded, tab))
         if embedded is False and tab is False:
             for k, v in [x.split("=") for x in macros.split(",") if x]:
                 self.macrodict[k.strip()] = v.strip()
             self.macrodict["NAME"] = self.name
-            assert isinstance(filename, Path)
-            self.macrodict["FILE"] = str(filename)
+            self.macrodict["FILE"] = (
+                filename if isinstance(filename, str) else str(filename)
+            )
             self.macrodict["EDM_MACROS"] = macros
 
     def addShell(self, command: str) -> None:
@@ -220,7 +233,7 @@ class GuiBuilder:
         # "%prog [options] <BLxxI-gui.xml> <RELEASE>\n"
 
         # store options
-        self.db = args.db[0]
+        self.db = args.db
         self.parseRelease(Path.absolute(args.release[0]))
         self.parseXml(args.xml[0])
 
@@ -999,7 +1012,7 @@ class GuiBuilder:
             EdmObject: The EdmObject of the screen.
         """
         # first open the screen if we've been given a filename
-        if type(screen) == str:
+        if isinstance(screen, str):
             filename = screen
             screen = EdmObject("Screen")
             screen.write(open(filename).read())
@@ -1008,9 +1021,10 @@ class GuiBuilder:
         groups = [ob for ob in screen.Objects if ob.Properties.Type == "Group"]
         for group in groups:
             # the vis PV is checked for tags
-            if hasattr(group, "visPv"):
+            if "visPv" in group.Properties:
                 visPv = group.Properties["visPv"]
                 assert isinstance(visPv, str)
+                # Make sure no leading and trailing ""
                 visPv = visPv.strip('"')
             else:
                 visPv = ""
@@ -1055,10 +1069,10 @@ class GuiBuilder:
 
     def flipped(self, screen: Union[str, EdmObject]) -> EdmObject:
         """Return a flipped version of screen."""
-        if type(screen) == str:
+        if isinstance(screen, str):
             filename = screen
             screen = EdmObject("Screen")
-            with open(filename, "w") as f:
+            with open(filename, "r") as f:
                 screen.write(f.read())
         assert isinstance(screen, EdmObject)
         return Flip_horizontal(screen, self.paths)
@@ -1100,7 +1114,8 @@ class GuiBuilder:
             letters = [chr(65 + j) for j in range(ncalcs)]
             CALC = f"({('|'.join(letters))})>0?1:0"
             cargs = dict(
-                (f"INP{l}", f"{recordName}{j + 1} MS") for j, l in enumerate(letters)
+                (f"INP{letter}", f"{recordName}{j + 1} MS")
+                for j, letter in enumerate(letters)
             )
             self.__writeCalc(
                 recordName, SCAN="1 second", CALC=CALC, PHAS=3, ACKT="NO", **cargs
@@ -1159,9 +1174,10 @@ class GuiBuilder:
             edl = self.dom + "-synoptic.edl"
         if macros is None:
             macros = "dom=" + self.dom
-        # find paths for current module
-        BLdevpath = self.RELEASE.replace("configure/RELEASE", self.dom + "App/opi/edl")
-        BLpath = self.RELEASE.replace("configure/RELEASE", "data")
+        # find paths for current moduletop,
+        top = Path("../..")
+        BLdevpath = self.RELEASE.joinpath(top, self.dom + "App/opi/edl").resolve()
+        BLpath = self.RELEASE.joinpath(top, "data")
         # format paths for release tree
         devpaths = "".join(
             ['    EDMDATAFILES="${EDMDATAFILES}%s:"\n' % x for x in self.devpaths]

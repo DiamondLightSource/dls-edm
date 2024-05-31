@@ -148,7 +148,7 @@ class EdmObject:
             assert all(isinstance(x, str) for x in text)
             lines = text
         else:
-            assert type(text) == str
+            assert isinstance(text, str)
             # if we are being passed text, we must be the top level object
             lines = text.strip().splitlines()
             # we must now clear all our properties to avoid junk tags
@@ -195,9 +195,9 @@ class EdmObject:
                     key = list_[0]
                     expect = "multiline"
                 else:
-                    self.Properties[list_[0]] = line[
-                        line.find(list_[0]) + len(list_[0]) :
-                    ].strip()
+                    self.Properties[list_[0]] = (
+                        line[line.find(list_[0]) + len(list_[0]) :].strip().strip('"')
+                    )
                     if list_[0] in ["x", "y", "w", "h"]:
                         tmp = self.Properties[list_[0]]
                         assert isinstance(tmp, str)
@@ -510,9 +510,10 @@ class EdmObject:
             assert isinstance(ytmp, Dict)
             ypts = [int(ytmp[y]) for y in ytmp.keys()]
             self.Properties["x"], self.Properties["y"] = min(xpts), min(ypts)
-            self.Properties["w"], self.Properties["h"] = max(xpts) - min(xpts), max(
-                ypts
-            ) - min(ypts)
+            self.Properties["w"], self.Properties["h"] = (
+                max(xpts) - min(xpts),
+                max(ypts) - min(ypts),
+            )
 
     def getDimensions(self) -> Tuple[int, int]:
         """Return a tuple of the width and height of self as integers."""
@@ -792,17 +793,25 @@ def write_helper() -> None:
     lib_path = Path.joinpath(epics_base_dir, "lib", "linux-x86")
     dirs += [f"-L {lib_path}"]
 
+    act_save = build_dir.joinpath("act_save.cc")
+    act_save_so = build_dir.joinpath("act_save.so")
+
+    print(build_dir)
     # build act_save.so, the program for creating a file of all edm objects
     line = f"g++ -fPIC {' '.join(dirs)} \
-        -shared act_save.cc -o act_save.so -Wl,-rpath={lib_path} -L {lib_path} -L {edm_dir}"
-
+        -shared {act_save} -DBUILD_DIR={build_dir} -o {act_save_so} -Wl,-rpath={lib_path} -L {lib_path} -L {edm_dir}"
     os.system(line)
+    print(line)
     # run it
-    os.system("env LD_PRELOAD=./act_save.so edm -crawl dummy.edl")
+    os.system(f"env LD_PRELOAD={act_save_so} edm -crawl dummy.edl")
+    print(f"env LD_PRELOAD={act_save_so} edm -crawl dummy.edl")
 
     # get rid of the junk output by one widget
-    # For some reason if the codec isn't 'latin-1' this line fails most of the time???
-    all_widgets = codecs.open("allwidgets.edl", "r", encoding="latin-1").read()
+    with codecs.open(
+        str(build_dir.joinpath("allwidgets.edl")), "r", encoding="latin-1"
+    ) as f:
+        # For some reason if the codec isn't 'latin-1' this line fails most of the time???
+        all_widgets = f.read()
     print("-- all_widgets read --")
     all_widgets = all_widgets.replace(
         "# Additional properties\nbeginObjectProperties\nendObjectProperties", ""
@@ -865,11 +874,11 @@ def write_helper() -> None:
         # print(ob.__dict__)
         PROPERTIES[ob.Properties.Type] = ob.copy().__dict__
 
-    prop_pkl_file = build_dir.joinpath(Path("properties_helper.pkl"))
+    prop_pkl_file = build_dir.joinpath("properties_helper.pkl")
     prop_pkl_file.touch()
     with prop_pkl_file.open("wb") as f:
         # print(PROPERTIES)
-        dill.dump(PROPERTIES, f, 0)
+        dill.dump(PROPERTIES, f, -1, byref=True)
     print("Done")
 
 
