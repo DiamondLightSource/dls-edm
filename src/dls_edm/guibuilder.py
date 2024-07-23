@@ -295,7 +295,7 @@ class GuiBuilder:
                     # now make a GBScreen out of it
                     for k, v in list(ob.attributes.items()):
                         assert k in ["filename", "macros"]
-                        if k == "filenane":
+                        if k == "filename":
                             args["filename"] = Path(v)
                         elif k == "macros":
                             args["macros"] = str(v)
