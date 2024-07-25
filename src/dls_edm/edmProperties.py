@@ -56,9 +56,10 @@ class EdmProperties:
                     f"Exception caught when attempting to set default properties:\n {e}"
                 )
 
+        # If PROPERTIES isn't defined, set some sensible values
+        print("Setting sensible values...")
         if self.Type != "Screen":
             self["object"] = "active" + self.Type.replace(" ", "") + "Class"
-        # If PROPERTIES isn't defined, set some sensible values
         self["major"], self["minor"], self["release"] = (4, 0, 0)
         self["x"], self["y"], self["w"], self["h"] = (0, 0, 100, 100)
 

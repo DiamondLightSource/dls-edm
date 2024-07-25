@@ -3,6 +3,7 @@ Some util functions for EdmObjects and EdmProperties.
 
 Author: Oliver Copping
 """
+
 from pathlib import Path
 from typing import Dict, List
 

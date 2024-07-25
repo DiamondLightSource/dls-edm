@@ -16,8 +16,6 @@ from typing import Dict, Generator, List, Optional, Tuple, TypedDict, Union
 from xml.dom import minidom
 from xml.dom.minidom import Element
 
-from typing_extensions import Unpack, assert_type
-
 from .common import colour_changing_rd, embed, label, lines
 from .edmObject import EdmObject, quoteString
 from .edmTable import EdmTable
@@ -206,7 +204,7 @@ class GuiBuilder:
             dom (str, optional): Beamline domain. Defaults to "".
             errors (int, optional): Debug level. Defaults to ERROR.
         """
-        # setup our list of objects
+        # setup our list of objects, fetched from the xml in parseXml()
         self.objects: List[GBObject] = []
         self.dom = dom
         self.errors = errors
@@ -382,7 +380,7 @@ class GuiBuilder:
         desc: str = "",
         P: str = "",
         obs: List[GBObject] = [],
-        filename: Optional[Path] = None,
+        filename: Optional[Path | str] = None,
         macrodict: Optional[Dict] = None,
         preferEmbed: bool = True,
         preferTab: bool = True,
@@ -403,7 +401,7 @@ class GuiBuilder:
             desc (str, optional): Description of object. Defaults to "".
             P (str, optional): Prefix of object. Defaults to "".
             obs (List[GBObject], optional): List of child objects. Defaults to [].
-            filename (Optional[Path], optional): Screen filename. Defaults to None.
+            filename (Optional[Path | str], optional): Screen filename. Defaults to None.
             macrodict (Optional[Dict], optional): Dictionary of macros.
                 Defaults to None.
             preferEmbed (bool, optional): Flag to determine if the screen should
@@ -421,6 +419,7 @@ class GuiBuilder:
         Returns:
             GBObject: GBObject class
         """
+
         # first make an object to fill in
         if macrodict is None:
             macrodict = {}
@@ -428,8 +427,17 @@ class GuiBuilder:
         macrodict["DESCRIPTION"] = desc
         if P:
             macrodict["P"] = P
-        ob = GBObject(name, macrodict, obs)
-        self.objects.append(ob)
+
+        # Check if object with the same name already exists to avoid duplication
+        ob_exists = [o for o in self.objects if o.name == name]
+        if ob_exists:
+            ob = ob_exists[0]
+            # overwrite with new macrodict items
+            for k, v in macrodict.items():
+                ob.macrodict[k] = v
+        else:
+            ob = GBObject(name, macrodict, obs)
+            self.objects.append(ob)
 
         # if we are given a P, this means we should write records for it
         if P:
@@ -479,7 +487,10 @@ class GuiBuilder:
                 filename = None
 
         # if there is a filename of some kind then add a screen to the object
-        if filename:
+        elif filename is not None:
+
+            filename = Path(filename) if isinstance(filename, str) else filename
+
             args: ScreenOptions = {
                 "filename": filename,
                 "macros": macros,
@@ -572,6 +583,11 @@ class GuiBuilder:
                 )
             # then embedded screens
             for e in embeds:
+                e_macrodict = {
+                    k: v for k, v in [x.split("=") for x in e.macros.split(",")]
+                }
+                if str(e.filename) == "." and "filename" in e_macrodict.keys():
+                    e.filename = Path(e_macrodict["filename"])
                 filename = e.filename
                 self.__load_screen(filename)
                 eob = embed(
@@ -643,7 +659,8 @@ class GuiBuilder:
                 for p in self.paths
                 if p.joinpath(filename).is_file()
             ]
-            assert paths, f"Cannot find file {filename} in paths {self.paths}"
+            assert paths, f"Cannot find file {filename} in paths:\n[\n- " \
+                + "\n- ".join([str(path) for path in sorted(self.paths)]) + "\n]"
             screen = EdmObject("Screen")
             screen.write(open(paths[0], "r").read())
             Substitute_embed.in_screens[filename] = screen.copy()
@@ -850,11 +867,11 @@ class GuiBuilder:
         screen.addObject(table)
         headerText = f"{typ} Summary"
         # objects is a list of list of screen objects to add
-        screen_objects = []
+        screen_objects: list[list[EdmObject]] = []
         if group:
             if groupByName:
                 # make a tree hierarchy according to . in names
-                groupObjects = []
+                groupObjects: list[GBObject] = []
                 for o in self.objects:
                     if len(o.name.split(".", 1)) == 1:
                         groupObjects.append(copy(o))
@@ -908,7 +925,7 @@ class GuiBuilder:
         if len(screen_objects) > 0 and len(extras) > 0:
             sobs = self.__screenObs("", extras, preferEmbed=False, preferTab=False)
 
-            scrObs_width = screen_objects[-1][-1]["w"]
+            scrObs_width = screen_objects[-1][-1].Properties["w"]
             if not isinstance(scrObs_width, int):
                 if isinstance(scrObs_width, str) and scrObs_width.isdigit():
                     scrObs_width = int(scrObs_width)

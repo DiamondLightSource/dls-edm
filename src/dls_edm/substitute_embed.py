@@ -166,7 +166,7 @@ class Substitute_embed:
             return None
 
     def __group_from_screen(
-        self, filename: Path, macros: Dict[str, str]
+        self, filename: str | Path, macros: Dict[str, str]
     ) -> Union[Tuple[EdmObject, List[EdmObject]], Tuple[None, None]]:
         """Create a group from a screen given by the filename.
 
@@ -178,10 +178,11 @@ class Substitute_embed:
             Union[Tuple[EdmObject, List[EdmObject]], Tuple[None, None]:
             Group of EdmObject and a list of the outsider EdmObjects.
         """
-        #
+        if not isinstance(filename, Path):
+            filename = Path(filename)
         filename = (
             filename.rename(f"{filename}.edl")
-            if not str(filename).endswith(".edl")
+            if not str(filename).strip('"').endswith(".edl")
             else filename
         )
         if filename in self.in_screens:
