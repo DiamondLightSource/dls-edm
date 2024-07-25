@@ -13,8 +13,8 @@ from typing import Dict, List, Tuple
 
 import dill
 
-from .edmProperties import EdmProperties
-from .utils import write_colour_helper
+from dls_edm.edmProperties import EdmProperties
+from dls_edm.utils import write_colour_helper
 
 ignore_list = [
     "4 0 1",
@@ -82,19 +82,6 @@ class EdmObject:
         self.Parent: EdmObject | None = None
 
         self.Properties: EdmProperties = EdmProperties(obj_type, defaults=defaults)
-
-        if self.Properties.Type != "Screen":
-            self.Properties["object"] = f"active{obj_type.replace(' ', '')}Class"
-
-        # If PROPERTIES isn't defined, set some sensible values
-        self.Properties["major"] = 4
-        self.Properties["minor"] = 0
-        self.Properties["release"] = 0
-
-        self.Properties["x"] = 0
-        self.Properties["y"] = 0
-        self.Properties["w"] = 100
-        self.Properties["h"] = 100
 
     def copy(self) -> "EdmObject":
         """
@@ -168,7 +155,8 @@ class EdmObject:
             elif expect in ["type", "multiline"]:
                 match expect:
                     case "type":
-                        self.Properties.Type = self._get_edl_object_type(line)
+                        if self.Properties.Type is None:
+                            self.Properties.Type = self._get_edl_object_type(line)
                         expect = None
                     case "multiline":
                         # value = self._write_edl_multiline(line)
@@ -682,14 +670,14 @@ class EdmObject:
                 new = ""
             else:
                 new = new_text
-            if type(value) == list:
+            if isinstance(value, list):
 
                 def process_string(x: str) -> str:
                     assert isinstance(x, str)
                     return x.replace(old_text, new)
 
                 self.Properties[key] = list(map(process_string, value))
-            elif type(value) == dict:
+            elif isinstance(value, dict):
                 # output a multiline dict
                 for k, v in value.items():
                     try:
@@ -819,10 +807,8 @@ def write_helper() -> None:
 
     # the output of the program isn't a proper screen, so make it so
     # defaults needs to be False as properties_helper.pkl may not exist and cause an error
-    screen_obj = EdmObject("Screen", defaults=False)
+    screen_obj = EdmObject("Screen", defaults=True)
     # fix some code, then add a header
-    with open("screen_obj.txt", "w") as f:
-        f.writelines(screen_obj.read() + "\n" + all_widgets)
     screen_obj.write(screen_obj.read() + "\n" + all_widgets)
 
     print("-- Setting up screen properties --")
@@ -872,7 +858,7 @@ def write_helper() -> None:
             elif key.upper() == "TYPE":
                 del ob.Properties[key]
         # print(ob.__dict__)
-        PROPERTIES[ob.Properties.Type] = ob.copy().__dict__
+        PROPERTIES[ob.Properties.Type] = ob.copy().Properties
 
     prop_pkl_file = build_dir.joinpath("properties_helper.pkl")
     prop_pkl_file.touch()
