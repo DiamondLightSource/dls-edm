@@ -458,9 +458,6 @@ class GuiBuilder:
                     and screenobs[0].Objects[0].Properties.Type == "Related Display"
                 ):
                     screenob = screenobs[0].Objects[0]
-                    screenob_filename = screenob.Properties["displayFileName"]
-                    assert isinstance(screenob_filename, Dict)
-                    filename = screenob_filename[0].strip('"')
                     if "symbols" in screenob.Properties:
                         screenob_macros = screenob.Properties["symbols"]
                         assert isinstance(screenob_macros, Dict)
@@ -483,11 +480,9 @@ class GuiBuilder:
                             screen, [], {}, ungroup=True
                         ).get_substituted_screen()
                     open(filename, "w").write(screen.read())
-            else:
-                filename = None
 
-        # if there is a filename of some kind then add a screen to the object
-        elif filename is not None:
+        # if there is now a filename of some kind then add a screen to the object
+        if filename is not None:
 
             filename = Path(filename) if isinstance(filename, str) else filename
 
