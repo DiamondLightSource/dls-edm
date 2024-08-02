@@ -280,12 +280,14 @@ class EdmObject:
                 self.Properties["symbols"] = {}
                 self.Properties["numDsps"] = 0
         # print the keys
-        for key in sorted(filter_keys):
+        for key in sorted(filter_set):
             if key in keys and not key == "object" and not key[:2] == "__":
                 value = self.Properties[key]
+                # If the value is literally True
                 if value is True:
                     # output a flag
                     lines.append(key)
+                # If it has a value that isn't literally True
                 elif value is not False:
                     if isinstance(value, List):
                         # output a multiline string
@@ -681,7 +683,7 @@ class EdmObject:
                 # output a multiline dict
                 for k, v in value.items():
                     try:
-                        result = v.replace(old_text, new)
+                        result = v.replace(old_text, new).replace('"', '')
                         # if we are in a symbols dict then take care that we
                         # leave '' values for empty substitutions
                         if key == "symbols":
