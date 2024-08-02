@@ -52,12 +52,9 @@ class EdmProperties:
                 self._properties.update(default_dict)
                 return
             except Exception as e:
-                print(
-                    f"Exception caught when attempting to set default properties:\n {e}"
-                )
+                pass
 
         # If PROPERTIES isn't defined, set some sensible values
-        print("Setting sensible values...")
         if self.Type != "Screen":
             self["object"] = "active" + self.Type.replace(" ", "") + "Class"
         self["major"], self["minor"], self["release"] = (4, 0, 0)
