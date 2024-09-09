@@ -316,7 +316,7 @@ class GuiBuilder:
         return [n for n in xml.childNodes if n.nodeType == n.ELEMENT_NODE]
 
     def get(
-        self, name: str, glob: bool = True, without: Optional[List[GBObject]] = None
+        self, name: str, glob: bool = True, without: Optional[List[str]] = None
     ) -> List[GBObject]:
         """Get all GBObjects with names matching name.
 
@@ -326,7 +326,7 @@ class GuiBuilder:
             name (str): Name of objects to find.
             glob (bool, optional): Flag to determine whether to fo wildcard expansion
                 or regex expansion. Defaults to True.
-            without (Optional[List[GBObject]], optional): List of objects to filter
+            without (Optional[List[str]], optional): List of object names to filter
                 from available objects. Defaults to None.
 
         Returns:
