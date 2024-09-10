@@ -482,7 +482,6 @@ class GuiBuilder:
 
         # if there is now a filename of some kind then add a screen to the object
         if filename is not None:
-
             filename = Path(filename) if isinstance(filename, str) else filename
 
             args: ScreenOptions = {
@@ -653,8 +652,11 @@ class GuiBuilder:
                 for p in self.paths
                 if p.joinpath(filename).is_file()
             ]
-            assert paths, f"Cannot find file {filename} in paths:\n[\n- " \
-                + "\n- ".join([str(path) for path in sorted(self.paths)]) + "\n]"
+            assert paths, (
+                f"Cannot find file {filename} in paths:\n[\n- "
+                + "\n- ".join([str(path) for path in sorted(self.paths)])
+                + "\n]"
+            )
             screen = EdmObject("Screen")
             screen.write(open(paths[0], "r").read())
             Substitute_embed.in_screens[filename] = screen.copy()
