@@ -384,7 +384,7 @@ class GuiBuilder:
         preferEmbed: bool = True,
         preferTab: bool = True,
         substituteEmbed: bool = True,
-        ar: Optional[int] = None,
+        ar: Optional[float] = None,
         d: str = ".",
         max_y: Optional[int] = None,
     ) -> GBObject:
@@ -410,7 +410,7 @@ class GuiBuilder:
             substituteEmbed (bool, optional): Flag to determine if embedded windows
                 in a screen are substutured for groups containing their contents.
                 Defaults to True.
-            ar (Optional[int], optional): Aspect ratio. Defaults to None.
+            ar (Optional[float], optional): Aspect ratio. Defaults to None.
             d (str, optional): Directory. Defaults to ".".
             max_y (Optional[int], optional): Max number of cells in Y.
                 Defaults to None.
