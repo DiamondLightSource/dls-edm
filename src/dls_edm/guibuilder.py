@@ -6,7 +6,6 @@ Updated to Python3 by: Oliver Copping
 """
 
 import argparse
-import os
 import re
 import sys
 from copy import copy
@@ -324,7 +323,7 @@ class GuiBuilder:
 
         Args:
             name (str): Name of objects to find.
-            glob (bool, optional): Flag to determine whether to fo wildcard expansion
+            glob (bool, optional): Flag to determine whether to do wildcard expansion
                 or regex expansion. Defaults to True.
             without (Optional[List[str]], optional): List of object names to filter
                 from available objects. Defaults to None.
