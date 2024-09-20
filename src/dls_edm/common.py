@@ -663,7 +663,7 @@ def embed(
     ob.Properties["displaySource"] = quoteString("menu")
     ob.Properties["filePv"] = quoteString(r"LOC\dummy=i:0")
     ob.Properties["numDsps"] = 1
-    ob.Properties["displayFileName"] = {0: quoteString(str(filename))}
+    ob.Properties["displayFileName"] = {0: str(filename)}
     if symbols:
         ob.Properties["symbols"] = {0: quoteString(symbols)}
     ob.Properties["noScroll"] = True

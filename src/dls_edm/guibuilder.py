@@ -383,7 +383,7 @@ class GuiBuilder:
         macrodict: Optional[Dict] = None,
         preferEmbed: bool = True,
         preferTab: bool = True,
-        substituteEmbed: bool = True,
+        substituteEmbed: bool = False,
         ar: Optional[float] = None,
         d: str = ".",
         max_y: Optional[int] = None,
@@ -476,7 +476,7 @@ class GuiBuilder:
                     )
                     if substituteEmbed:
                         screen = Substitute_embed(
-                            screen, [], {}, ungroup=True
+                            screen, self.paths, {}, ungroup=False
                         ).get_substituted_screen()
                     open(filename, "w").write(screen.read())
 
@@ -502,8 +502,8 @@ class GuiBuilder:
     ) -> List[EdmObject]:
         zero = r"LOC\dummy0=i:0"
         # create the actual screen obs
-        out = []
-        tabobs = []
+        out: list[EdmObject] = []
+        tabobs: list[tuple] = []
         for ob in obs:
             # First calculate the status and severity Pvs
             StatusPv = [r.pv for r in ob.records if not r.sevr]
@@ -576,13 +576,20 @@ class GuiBuilder:
                 )
             # then embedded screens
             for e in embeds:
-                e_macrodict = {
-                    k: v for k, v in [x.split("=") for x in e.macros.split(",")]
-                }
+                try:
+                    e_macrodict = {
+                        k: v for k, v in [x.split("=") for x in e.macros.split(",")]
+                    }
+                # If no macrodict is provided, make an empty dict
+                except ValueError:
+                    e_macrodict = {}
                 if str(e.filename) == "." and "filename" in e_macrodict.keys():
                     e.filename = Path(e_macrodict["filename"])
-                filename = e.filename
+                filename = (
+                    Path(e.filename) if isinstance(e.filename, str) else e.filename
+                )
                 self.__load_screen(filename)
+
                 eob = embed(
                     0,
                     0,
@@ -851,7 +858,7 @@ class GuiBuilder:
             extras (List[GBObject], optional): List of extra objects. Defaults to [].
         """
         # this is the filename of the generated screen
-        filename = self.__safe_filename(f"{self.dom}-{typ.lower()}.edl")
+        filename = Path(self.__safe_filename(f"{self.dom}-{typ.lower()}.edl"))
         if self.errors:
             print(f"Creating {filename}")
         # this is the filename for each object put on screens

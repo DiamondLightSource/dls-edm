@@ -6,6 +6,7 @@ Saves as <output_screen_filename>
 Author: Tom Cobb
 Updated to Python3 by: Oliver Copping
 """
+
 import argparse
 import re
 from pathlib import Path
@@ -28,7 +29,7 @@ class Substitute_embed:
     def __init__(
         self,
         screen: EdmObject,
-        paths: List[str],
+        paths: List[Path] | List[str],
         dict_: Dict[str, int] = {"NTEMP": 99, "NFLOW": 99, "NCURR": 99},
         ungroup: bool = False,
     ) -> None:
@@ -129,7 +130,9 @@ class Substitute_embed:
                         group, new_outsiders = self.__group_from_screen(
                             ob.Properties["displayFileName"][i], macros
                         )
-                    if group is not None and new_outsiders is not None:
+                    if group is not None:
+                        if new_outsiders is None:
+                            new_outsiders = []
                         assert isinstance(group, EdmObject)
                         assert isinstance(new_outsiders, List)
                         for new_ob in [group] + new_outsiders:
