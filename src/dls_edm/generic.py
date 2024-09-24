@@ -13,6 +13,7 @@ following algorithm:
 Author: Tom Cobb
 Updated to Python3 by: Oliver Copping
 """
+
 import math
 from typing import Dict, List, Optional, Tuple
 
@@ -134,7 +135,7 @@ def Generic(
     """
     display_w, display_h = 1280, 1024
     # Sort the object into sized groups
-    ob_dict: Dict = {}
+    ob_dict: Dict[Tuple[int, int], list[EdmObject]] = {}
     for ob in ob_list:
         ob_dict.setdefault(ob.getDimensions(), []).append(ob)
     # Find the biggest object size
@@ -143,7 +144,7 @@ def Generic(
     # This is the list of obs that will make up the final screen
     base_obs: List = []
     # Tile each group
-    for w, h in reversed(sorted(ob_dict, key=lambda x: x[0] * x[1])):
+    for w, h in sorted(ob_dict, key=lambda x: x[0] * x[1], reverse=True):
         obs = ob_dict[(w, h)]
         while obs:
             ob = obs.pop(0)
