@@ -1014,6 +1014,68 @@ class GuiBuilder:
         """Create an interlock summary <dom>-interlocks.edl."""
         self.summary("Water Flows", Path("flow-embed.edl"), embedded=True)
 
+    def softiocSummary(self, softiocs: list[tuple[str, str, str]]):
+        """
+        Create a summary of all softiocs <dom>-softioc-status.edl
+
+        softiocs should be a list of tuples of 3 values:
+        (softioc, ioc-detail, ioc-host)
+        """
+
+        def macroString(macroHash):
+            """transform a hash of key, value string pairs
+            to a string that can be passed to edm as comma separated
+            macro spec"""
+            return ",".join([f"{k}={v}" for k, v in macroHash.items()])
+
+        # this is the filename of the generated screen
+        filename = self.__safe_filename(f"{self.dom}-softioc-status.edl")
+        embedded_elems: list[GBObject] = []
+
+        count: int = 1
+        for softioc, ioc_detail, ioc_host in softiocs:
+            count += 1
+            name = f"IOC{count}"
+            ioc_dict = {
+                "softioc": softioc,
+                "ioc-host": ioc_host,
+                "ioc-detail": ioc_detail,
+            }
+            assert (
+                "=" not in ioc_detail
+            ), f"'=' are not allowed in IOC detail.\nLine: {ioc_dict}\n\n{macroString(ioc_dict)}\n"
+
+            if "RSERV" in ioc_host:
+                ioc_dict["glocal"] = ""
+            else:
+                ioc_dict["glocal"] = "-g"
+
+            if "ECSCN" in softioc or "CYC" in softioc:
+                embedfile = "BLGui-scanner-embed.edl"
+            else:
+                embedfile = "BLGui-softiocSummary-embed.edl"
+
+            gob = self.object(
+                name,
+            )
+            gob.addScreen(embedfile, macroString(ioc_dict), embedded=True)
+            embedded_elems.append(gob)
+
+        softioc_title = self.object("softioc_title")
+        softioc_title.addScreen(
+            "BLGui-softiocSummary-title-embed.edl", "", embedded=True
+        )
+
+        self.object(
+            "IOCSTAT",
+            "Soft IOCs",
+            "IOCSTAT",
+            [softioc_title, *embedded_elems],
+            ar=0.2,
+            # This needs to be True to help with performance
+            substituteEmbed=True,
+        )
+
     def autofilled(self, screen: Union[str, EdmObject]) -> EdmObject:
         """Return an autofilled version of screen.
 
