@@ -122,6 +122,7 @@ class GBObject(object):
 
         macro_regex = '[\w_-]+=[^"=]+(?:,[^"=]+)*(?=,[\w_-]+=|$)'
         macrolist: list[str] = re.findall(macro_regex, macros)
+
         # make sure edm gets '' for empty macros
         for macro in macrolist:
             split_macro = macro.split("=")
@@ -479,12 +480,14 @@ class GuiBuilder:
                         screenobs, auto_x_y_string=P, ideal_a_r=ar, max_y=max_y
                     )
                     macros = ""
-                    screen = Titlebar(
-                        screen,
-                        button_text=name,
-                        header_text=desc,
-                        title="Device - %s" % name,
-                    )
+                    # If not substituted, attached a title and exit button
+                    if not substituteEmbed:
+                        screen = Titlebar(
+                            screen,
+                            button_text=name,
+                            header_text=desc,
+                            title="Device - %s" % name,
+                        )
                     if substituteEmbed:
                         screen = Substitute_embed(
                             screen, self.paths, {}, ungroup=False
