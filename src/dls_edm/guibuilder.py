@@ -1076,6 +1076,70 @@ class GuiBuilder:
             substituteEmbed=True,
         )
 
+    def pmacSummary(self, pmacinfo: list[tuple[str, str, str, str, str, str]]):
+        """
+        Create a summary of all pmacs <dom>-pmac-status.edl
+
+        pmacinfo should be a list of tuples of 6 values:
+        (step, step-detail, step-ioc, connection-type, step-ip, step-rack)
+        """
+
+        def macroString(macroHash):
+            """transform a hash of key, value string pairs
+            to a string that can be passed to edm as comma separated
+            macro spec"""
+            return ",".join([f"{k}={v}" for k, v in macroHash.items()])
+
+        # this is the filename of the generated screen
+        filename = self.__safe_filename(f"{self.dom}-pmac-status.edl")
+        embedded_elems: list[GBObject] = []
+
+        conn_types = ["ts", "tcpip", "rs232", "ssh"]
+
+        count: int = 1
+        for step, step_detail, step_ioc, conn_type, step_ip, step_rack in pmacinfo:
+            count += 1
+            name = f"PMAC{count}"
+
+            if len(step_ip.split(":")) == 2:
+                step_ip, step_port = step_ip.split(":", maxsplit=1)
+            else:
+                step_port = "1025"
+
+            step_dict = {
+                "step": step,
+                "desc": step_detail,
+                "ioc": step_ioc,
+                "connection-type": conn_type if conn_type in conn_types else "tcpip",
+                "step-ip": step_ip,
+                "step-port": step_port,
+                "rack-cia": step_rack if step_rack != "" else "N/A",
+            }
+            assert (
+                "=" not in step_detail
+            ), f"'=' are not allowed in STEP detail.\nLine: {step_dict}"
+
+            embedfile = "BLGui-pmacSummary-embed.edl"
+
+            gob = self.object(
+                name,
+            )
+            gob.addScreen(embedfile, macroString(step_dict), embedded=True)
+            embedded_elems.append(gob)
+
+        pmac_title = self.object("pmac_title")
+        pmac_title.addScreen("BLGui-pmacSummary-title-embed.edl", "", embedded=True)
+
+        self.object(
+            "PMACSTAT",
+            "PMACs",
+            "PMACSTAT",
+            [pmac_title, *embedded_elems],
+            ar=0.3,
+            # This needs to be True to help with performance
+            substituteEmbed=True,
+        )
+
     def autofilled(self, screen: Union[str, EdmObject]) -> EdmObject:
         """Return an autofilled version of screen.
 
