@@ -123,10 +123,15 @@ class Substitute_embed:
                     new_outsiders: List[EdmObject] | None = None
                     if "symbols" in ob.Properties:
                         assert isinstance(ob.Properties["symbols"], Dict)
-                        for sub in ob.Properties["symbols"][i].split(","):
-                            macro = [x.strip() for x in sub.strip('"').split("=")]
+                        symbol = ob.Properties["symbols"][i].strip('"')
+
+                        macro_regex = '[\w_-]+=[^"=]+(?:,[^"=]+)*(?=,[\w_-]+=|$)'
+                        m: list[str] = re.findall(macro_regex, symbol)
+                        for x in m:
+                            macro = x.split("=")
                             if len(macro) == 2:
                                 macros[macro[0]] = macro[1]
+
                         group, new_outsiders = self.__group_from_screen(
                             ob.Properties["displayFileName"][i], macros
                         )

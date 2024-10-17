@@ -119,15 +119,26 @@ class GBObject(object):
 
         macros = macros.replace(",undefined)", ")").rstrip("\r")
         mdict = {}
+
+        macro_regex = '[\w_-]+=[^"=]+(?:,[^"=]+)*(?=,[\w_-]+=|$)'
+        macrolist: list[str] = re.findall(macro_regex, macros)
         # make sure edm gets '' for empty macros
-        for k, v in [x.split("=") for x in macros.split(",") if x]:
+        for macro in macrolist:
+            split_macro = macro.split("=")
+            k, v = split_macro
             if not v.strip():
                 v = "''"
             mdict[k.strip()] = v.strip()
+
+        # Remake macro string and list
         macros = ",".join([f"{k}={v}" for k, v in mdict.items()])
+        macrolist = re.findall(macro_regex, macros)
+
         self.screens.append(GBScreen(filename, macros, embedded, tab))
         if embedded is False and tab is False:
-            for k, v in [x.split("=") for x in macros.split(",") if x]:
+            for macro in macrolist:
+                split_macro = macro.split("=")
+                k, v = split_macro
                 self.macrodict[k.strip()] = v.strip()
             self.macrodict["NAME"] = self.name
             self.macrodict["FILE"] = (
