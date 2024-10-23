@@ -1231,11 +1231,13 @@ class GuiBuilder:
         """Return a flipped version of screen."""
         if isinstance(screen, str):
             filename = screen
-            screen = EdmObject("Screen")
+            new_screen = EdmObject("Screen")
             with open(filename, "r") as f:
-                screen.write(f.read())
-        assert isinstance(screen, EdmObject)
-        return Flip_horizontal(screen, self.paths)
+                new_screen.write(f.read())
+        else:
+            new_screen = screen.copy()
+        assert isinstance(new_screen, EdmObject)
+        return Flip_horizontal(new_screen, self.paths)
 
     def writeScreen(self, screen: EdmObject, filename: str):
         """Write screen object screen to filename."""
