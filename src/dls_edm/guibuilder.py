@@ -399,6 +399,7 @@ class GuiBuilder:
         ar: Optional[float] = None,
         d: str = ".",
         max_y: Optional[int] = None,
+        ta: str = "CO",
     ) -> GBObject:
         """Associate a group of objects with a name, prefix and filename.
 
@@ -426,6 +427,8 @@ class GuiBuilder:
             d (str, optional): Directory. Defaults to ".".
             max_y (Optional[int], optional): Max number of cells in Y.
                 Defaults to None.
+            ta (Optional[str], optional): Technical area abbreviation to determine
+                the colours to use for the screen. Defaults to "CO".
 
         Returns:
             GBObject: GBObject class
@@ -487,6 +490,7 @@ class GuiBuilder:
                             button_text=name,
                             header_text=desc,
                             title="Device - %s" % name,
+                            ta=ta,
                         )
                     if substituteEmbed:
                         screen = Substitute_embed(
