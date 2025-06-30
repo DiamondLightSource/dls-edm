@@ -1,0 +1,10 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: dls-edm
+  title: dls-edm
+  description: DLS package for building Beamline GUIs
+spec:
+  type: library
+  lifecycle: production
+  owner: group:default/beamline-controls
