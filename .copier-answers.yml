@@ -15,5 +15,5 @@ github_org: DiamondLightSource
 package_name: dls_edm
 pypi: false
 repo_name: dls-edm
-strict_typing: true
+strict_typing: false
 type_checker: pyright

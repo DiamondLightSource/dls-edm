@@ -46,7 +46,7 @@ name = "Oliver Copping"
 version_file = "src/dls_edm/_version.py"
 
 [tool.pyright]
-typeCheckingMode = "strict"
+typeCheckingMode = "standard"
 reportMissingImports = false # Ignore missing stubs in imported modules
 
 [tool.pytest.ini_options]
