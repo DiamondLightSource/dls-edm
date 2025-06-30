@@ -7,6 +7,6 @@
 """
 
 from ._version import __version__
-from .edmObject import write_helper
+from .edmObject import write_helper as helper
 
-__all__ = ["__version__", "write_helper"]
+__all__ = ["__version__", "helper"]
