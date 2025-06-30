@@ -1,23 +1,13 @@
-from setuptools import setup, find_packages, Extension
+# type: ignore
+import glob
+import importlib.util
 
-# these lines allow the version to be specified in Makefile.private
-import os
-version = os.environ.get("MODULEVER", "0.0")
+from setuptools import setup
 
-setup(
-    # install_requires allows you to import a specific version of a module in your scripts 
-#   install_requires = ['dls.ca2==1.6'],
-    # name of the module
-    name = "dls_edm",
-    # version: over-ridden by the release script
-    version = version,
-    packages = ["dls_edm"],
-    zip_safe = False,
-    package_data = { "": ["*.pkl"] },
-    # define console_scripts to be 
-    entry_points = {'console_scripts': \
-                    ['dls-edm-resize.py = dls_edm.resize:cl_resize',
-                     'dls-edm-titlebar.py = dls_edm.titlebar:cl_titlebar',
-                     'dls-edm-substitute-embed.py = dls_edm.substitute_embed:cl_substitute_embed',
-                     'dls-edm-flip-horizontal.py = dls_edm.flip_horizontal:cl_flip_horizontal']},
-    )
+# Import <package>._version_git.py without importing <package>
+path = glob.glob(__file__.replace("setup.py", "src/*/_version_git.py"))[0]
+spec = importlib.util.spec_from_file_location("_version_git", path)
+vg = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(vg)
+
+setup(cmdclass=vg.get_cmdclass(), version=vg.__version__)

@@ -1,0 +1,346 @@
+(dp0
+VWhite
+p1
+Vindex 0
+p2
+sVDisconn/Invalid
+p3
+Vindex 0
+p4
+sVTop Shadow
+p5
+Vindex 1
+p6
+sVgrey-2
+p7
+Vindex 2
+p8
+sVCanvas
+p9
+Vindex 3
+p10
+sVButton: On
+p11
+Vindex 4
+p12
+sVWid-alt/Anno-sec
+p13
+Vindex 5
+p14
+sVTitle
+p15
+Vindex 6
+p16
+sVgrey-7
+p17
+Vindex 7
+p18
+sVgrey-8
+p19
+Vindex 8
+p20
+sVHelp
+p21
+Vindex 9
+p22
+sVMonitor BG
+p23
+Vindex 10
+p24
+sVBottom Shadow
+p25
+Vindex 11
+p26
+sVgrey-12
+p27
+Vindex 12
+p28
+sVgrey-13
+p29
+Vindex 13
+p30
+sVBlack
+p31
+Vindex 14
+p32
+sVGreen LED: On
+p33
+Vindex 15
+p34
+sVMonitor: NORMAL
+p35
+Vindex 16
+p36
+sVOpen/On
+p37
+Vindex 17
+p38
+sVMonitor: alt
+p39
+Vindex 18
+p40
+sVGreen LED: Off
+p41
+Vindex 19
+p42
+sVRed LED: On
+p43
+Vindex 20
+p44
+sVMonitor: MAJOR
+p45
+Vindex 21
+p46
+sVShut/Off
+p47
+Vindex 22
+p48
+sVMon: MAJOR/unack
+p49
+Vindex 23
+p50
+sVRed LED: Off
+p51
+Vindex 24
+p52
+sVController
+p53
+Vindex 25
+p54
+sVblue-26
+p55
+Vindex 26
+p56
+sVblue-27
+p57
+Vindex 27
+p58
+sVblue-28
+p59
+Vindex 28
+p60
+sVblue-29
+p61
+Vindex 29
+p62
+sVController/alt
+p63
+Vindex 30
+p64
+sVcyan-31
+p65
+Vindex 31
+p66
+sVcyan-32
+p67
+Vindex 32
+p68
+sVcyan-33
+p69
+Vindex 33
+p70
+sVcyan-34
+p71
+Vindex 34
+p72
+sVYellow LED: On
+p73
+Vindex 35
+p74
+sVMonitor: MINOR
+p75
+Vindex 36
+p76
+sVMon: MINOR/unack
+p77
+Vindex 37
+p78
+sVamber-38
+p79
+Vindex 38
+p80
+sVYellow LED: Off
+p81
+Vindex 39
+p82
+sVShell/reldsp-alt
+p83
+Vindex 40
+p84
+sVorange-41
+p85
+Vindex 41
+p86
+sVorange-42
+p87
+Vindex 42
+p88
+sVRelated display
+p89
+Vindex 43
+p90
+sVbrown-44
+p91
+Vindex 44
+p92
+sVpurple-45
+p93
+Vindex 45
+p94
+sVExit/Quit/Kill
+p95
+Vindex 46
+p96
+sVpurple-47
+p97
+Vindex 47
+p98
+sVCO title
+p99
+Vindex 48
+p100
+sVCO help
+p101
+Vindex 49
+p102
+sVLINAC canvas
+p103
+Vindex 50
+p104
+sVEA title
+p105
+Vindex 51
+p106
+sVEA help
+p107
+Vindex 52
+p108
+sVVA title
+p109
+Vindex 53
+p110
+sVVA help
+p111
+Vindex 54
+p112
+sVFE canvas
+p113
+Vindex 55
+p114
+sVMA title
+p115
+Vindex 56
+p116
+sVMA help
+p117
+Vindex 57
+p118
+sVTI title
+p119
+Vindex 58
+p120
+sVTI help
+p121
+Vindex 59
+p122
+sVRING canvas
+p123
+Vindex 60
+p124
+sVMO title
+p125
+Vindex 61
+p126
+sVMO help
+p127
+Vindex 62
+p128
+sVCG title
+p129
+Vindex 63
+p130
+sVCG help
+p131
+Vindex 64
+p132
+sVTARGET canvas
+p133
+Vindex 65
+p134
+sVRS title
+p135
+Vindex 66
+p136
+sVRS help
+p137
+Vindex 67
+p138
+sVRF title
+p139
+Vindex 68
+p140
+sVRF help
+p141
+Vindex 69
+p142
+sVCF canvas
+p143
+Vindex 70
+p144
+sVMP title
+p145
+Vindex 71
+p146
+sVMP help
+p147
+Vindex 72
+p148
+sVDI title
+p149
+Vindex 73
+p150
+sVDI help
+p151
+Vindex 74
+p152
+sVUNMS canvas
+p153
+Vindex 75
+p154
+sVPS title
+p155
+Vindex 76
+p156
+sVPS help
+p157
+Vindex 77
+p158
+sV78
+p159
+Vindex 78
+p160
+sV79
+p161
+Vindex 79
+p162
+sVinvisible
+p163
+Vindex 80
+p164
+sVtest1
+p165
+Vindex 81
+p166
+sVtest1Inv
+p167
+Vindex 82
+p168
+sVvacStatus
+p169
+Vindex 83
+p170
+sValert
+p171
+Vindex 84
+p172
+s.
