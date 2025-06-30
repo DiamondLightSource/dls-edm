@@ -63,7 +63,7 @@ class EdmProperties:
     # def getProperty(self, property_key: str) -> str | bool | int | List[str] | Dict:
     def __getitem__(self, property_key: str) -> str | bool | int | List[str] | Dict:
         if property_key == "displayFileName" and property_key not in self._properties:
-            return {"displayFileName": ""}
+            return {0: ""}
         else:
             assert (
                 property_key in self._properties
