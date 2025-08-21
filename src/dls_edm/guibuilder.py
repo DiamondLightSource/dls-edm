@@ -1110,6 +1110,8 @@ class GuiBuilder:
 
             if "ECSCN" in softioc or "CYC" in softioc:
                 embedfile = "BLGui-scanner-embed.edl"
+            elif "k8s" in ioc_host.lower():
+                embedfile = "BLGui-k8s-softiocSummary-embed.edl"
             else:
                 embedfile = "BLGui-softiocSummary-embed.edl"
 
