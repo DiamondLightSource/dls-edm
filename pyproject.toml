@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=64", "setuptools_scm[toml]>=8"]
+requires = ["setuptools>=82.0.1", "setuptools_scm[toml]>=10.0.5"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -26,13 +26,13 @@ dev = [
     "pipdeptree",
     "pre-commit",
     "pyright",
-    "pytest>8.3.4",
+    "pytest>=9.0.3",
     "pytest-cov",
     "ruff",
     "tox-uv",
     "twine",
     "types-mock",
-    "uv~=0.7.0",
+    "uv~=0.11.6",
 ]
 
 [project.scripts]
