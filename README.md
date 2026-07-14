@@ -10,8 +10,9 @@ DLS package for building Beamline GUIs
 This is where you should write a short paragraph that describes what your module does,
 how it does it, and why people should use it.
 
-Source          | <https://github.com/DiamondLightSource/dls-edm>
+What            | Where
 :---:           | :---:
+Source          | <https://github.com/DiamondLightSource/dls-edm>
 Docker          | `docker run ghcr.io/diamondlightsource/dls-edm:latest`
 Releases        | <https://github.com/DiamondLightSource/dls-edm/releases>
 
